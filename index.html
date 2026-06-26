@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Resume Developer</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>AI Resume Developer</h1>
+    <p class="subtitle">Paste your resume and a job description — Claude will improve it.</p>
+
+    <div class="columns">
+      <div class="panel">
+        <label>Your Resume</label>
+        <textarea id="resume" rows="14" placeholder="Paste your current resume here..."></textarea>
+      </div>
+      <div class="panel">
+        <label>Job Description</label>
+        <textarea id="job" rows="14" placeholder="Paste the job description here..."></textarea>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button onclick="runAI('rewrite')">✨ Rewrite Resume</button>
+      <button onclick="runAI('score')">📊 ATS Score</button>
+      <button onclick="runAI('keywords')">🔍 Missing Keywords</button>
+      <button onclick="runAI('cover')">📝 Cover Letter</button>
+    </div>
+
+    <div id="output" class="output hidden">
+      <h2 id="output-title">Result</h2>
+      <div id="output-content"></div>
+      <button id="copy-btn" onclick="copyOutput()">Copy</button>
+    </div>
+
+    <div id="loading" class="loading hidden">Claude is thinking…</div>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
