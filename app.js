@@ -1,5 +1,5 @@
 // Paste your Gemini API key below (keep the quotes)
-const API_KEY = "YOUR_GEMINI_KEY_HERE";
+const API_KEY = "AQ.Ab8RN6JPnqiE_1hyRoHo3xKiKIDt0RdS3CETPIHGoWk3Sen-Vg";
 
 const PROMPTS = {
   rewrite: (r,j) => `You are an elite resume writer. Rewrite this resume to be perfectly tailored for the job below. Use strong action verbs, quantify achievements where possible, and ensure ATS compatibility. Keep all facts true.\n\nJOB:\n${j}\n\nRESUME:\n${r}\n\nReturn only the polished resume.`,
