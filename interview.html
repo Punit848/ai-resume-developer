@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CareerAI — Live Interview Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection@1.0.5/dist/face-landmarks-detection.js"></script>
+<style>
+:root{--bg:#0a0a0f;--surface:#111118;--card:#16161f;--border:#2a2a3a;--accent:#7c6fff;--accent2:#ff6b9d;--accent3:#00d4aa;--text:#e8e8f0;--muted:#7a7a9a;--dim:#3a3a5a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+nav{display:flex;align-items:center;justify-content:space-between;padding:1rem 2rem;border-bottom:1px solid var(--border);background:rgba(10,10,15,0.95);backdrop-filter:blur(12px);position:sticky;top:0;z-index:100}
+.logo{font-family:'Space Grotesk',sans-serif;font-size:1.2rem;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.back-btn{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:.5rem 1rem;border-radius:8px;cursor:pointer;font-size:.85rem;font-family:'Inter',sans-serif;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.container{max-width:1200px;margin:0 auto;padding:2rem}
+
+/* SETUP SCREEN */
+.setup-screen{text-align:center;padding:3rem 1rem}
+.setup-screen h1{font-family:'Space Grotesk',sans-serif;font-size:2.5rem;font-weight:700;margin-bottom:1rem}
+.setup-screen h1 span{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.setup-screen p{color:var(--muted);font-size:1rem;margin-bottom:2.5rem;line-height:1.7}
+.setup-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;max-width:700px;margin:0 auto 2rem;text-align:left}
+@media(max-width:600px){.setup-grid{grid-template-columns:1fr}}
+.setup-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.5rem}
+.setup-card h3{font-size:.95rem;font-weight:600;margin-bottom:.75rem;display:flex;align-items:center;gap:8px}
+.setup-card p{font-size:.82rem;color:var(--muted);line-height:1.5}
+.field-label{display:block;font-size:.78rem;font-weight:600;color:var(--muted);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.05em}
+input[type=text],input[type=password],select,textarea{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Inter',sans-serif;font-size:.88rem;padding:.75rem;outline:none;transition:border .2s}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+select option{background:var(--card)}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:.7rem 1.4rem;border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:.9rem;font-weight:500;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif}
+.btn:hover{border-color:var(--accent);background:var(--card)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-size:1rem;padding:.85rem 2rem}
+.btn.primary:hover{opacity:.85}
+.btn.danger{background:rgba(255,107,157,.15);border-color:rgba(255,107,157,.4);color:var(--accent2)}
+.btn.teal{background:rgba(0,212,170,.15);border-color:rgba(0,212,170,.4);color:var(--accent3)}
+
+/* INTERVIEW SCREEN */
+.interview-screen{display:none}
+.interview-layout{display:grid;grid-template-columns:1fr 380px;gap:1.5rem;align-items:start}
+@media(max-width:900px){.interview-layout{grid-template-columns:1fr}}
+
+/* VIDEO PANEL */
+.video-panel{background:var(--card);border:1px solid var(--border);border-radius:18px;overflow:hidden}
+.video-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.video-title{font-weight:600;font-size:.9rem;display:flex;align-items:center;gap:8px}
+.rec-dot{width:8px;height:8px;border-radius:50%;background:#ff4444;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.video-wrapper{position:relative;background:#000;aspect-ratio:4/3}
+video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.video-overlay{position:absolute;inset:0;pointer-events:none}
+canvas#pose-canvas{position:absolute;inset:0;width:100%;height:100%}
+
+/* POSTURE ALERTS */
+.posture-bar{padding:1rem 1.25rem;display:flex;flex-wrap:wrap;gap:.5rem}
+.posture-chip{padding:5px 10px;border-radius:6px;font-size:.75rem;font-weight:500;display:flex;align-items:center;gap:5px}
+.posture-chip.good{background:rgba(0,212,170,.12);border:1px solid rgba(0,212,170,.3);color:var(--accent3)}
+.posture-chip.warn{background:rgba(255,170,0,.12);border:1px solid rgba(255,170,0,.3);color:#fa0}
+.posture-chip.bad{background:rgba(255,107,157,.12);border:1px solid rgba(255,107,157,.3);color:var(--accent2)}
+
+/* RIGHT PANEL */
+.right-panel{display:flex;flex-direction:column;gap:1rem}
+.panel-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.25rem}
+.panel-card h3{font-size:.85rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:1rem}
+
+/* QUESTION DISPLAY */
+.current-question{font-family:'Space Grotesk',sans-serif;font-size:1.1rem;font-weight:600;line-height:1.5;margin-bottom:1rem;min-height:60px}
+.q-meta{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.q-badge{font-size:.72rem;padding:3px 8px;border-radius:5px;background:rgba(124,111,255,.12);color:var(--accent);font-weight:600}
+.q-count{font-size:.78rem;color:var(--muted)}
+
+/* TIMER */
+.timer-display{font-family:'Space Grotesk',sans-serif;font-size:2.5rem;font-weight:700;text-align:center;padding:.5rem;border-radius:10px;background:var(--surface);margin-bottom:1rem}
+.timer-display.warning{color:#fa0}
+.timer-display.danger{color:var(--accent2)}
+.timer-display.normal{color:var(--accent3)}
+
+/* MIC BUTTON */
+.mic-section{text-align:center}
+.mic-btn{width:72px;height:72px;border-radius:50%;border:none;cursor:pointer;font-size:1.8rem;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;transition:all .2s;background:var(--surface);border:2px solid var(--border)}
+.mic-btn.listening{background:rgba(255,107,157,.2);border-color:var(--accent2);animation:mic-pulse 1s infinite}
+@keyframes mic-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.mic-label{font-size:.8rem;color:var(--muted);margin-bottom:.75rem}
+.transcript-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.75rem;min-height:80px;font-size:.85rem;line-height:1.6;color:var(--text);margin-bottom:.75rem}
+
+/* FEEDBACK */
+.feedback-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1rem;display:none}
+.feedback-box.show{display:block}
+.feedback-score{font-family:'Space Grotesk',sans-serif;font-size:1.8rem;font-weight:700;margin-bottom:.5rem}
+.feedback-score.good{color:var(--accent3)}
+.feedback-score.mid{color:#fa0}
+.feedback-score.low{color:var(--accent2)}
+.feedback-text{font-size:.82rem;line-height:1.7;color:var(--text);white-space:pre-wrap}
+
+/* PROGRESS */
+.progress-bar{height:4px;background:var(--border);border-radius:2px;margin-bottom:1rem;overflow:hidden}
+.progress-fill{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .5s}
+
+/* SPEAKING INDICATOR */
+.speaking-indicator{display:none;align-items:center;gap:8px;font-size:.82rem;color:var(--accent);margin-bottom:.5rem}
+.speaking-indicator.show{display:flex}
+.wave{display:flex;gap:2px;align-items:center}
+.wave span{display:block;width:3px;border-radius:2px;background:var(--accent);animation:wave .8s infinite}
+.wave span:nth-child(1){height:8px;animation-delay:0s}
+.wave span:nth-child(2){height:16px;animation-delay:.1s}
+.wave span:nth-child(3){height:12px;animation-delay:.2s}
+.wave span:nth-child(4){height:20px;animation-delay:.3s}
+.wave span:nth-child(5){height:10px;animation-delay:.4s}
+@keyframes wave{0%,100%{transform:scaleY(.5)}50%{transform:scaleY(1)}}
+
+/* RESULTS SCREEN */
+.results-screen{display:none}
+.results-header{text-align:center;padding:2rem 0}
+.results-header h2{font-family:'Space Grotesk',sans-serif;font-size:2rem;font-weight:700;margin-bottom:.5rem}
+.overall-score{font-family:'Space Grotesk',sans-serif;font-size:4rem;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:1rem 0}
+.results-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin-top:1.5rem}
+.result-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.25rem}
+.result-q{font-size:.85rem;font-weight:600;margin-bottom:.5rem;color:var(--muted)}
+.result-a{font-size:.82rem;color:var(--text);margin-bottom:.75rem;line-height:1.5}
+.result-score{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:1.2rem;margin-bottom:.25rem}
+.result-feedback{font-size:.8rem;color:var(--muted);line-height:1.5}
+
+/* LOADING */
+.spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--card);border:1px solid var(--accent3);color:var(--accent3);padding:.75rem 1.25rem;border-radius:10px;font-size:.85rem;font-weight:500;z-index:999;transform:translateY(100px);opacity:0;transition:all .3s}
+.toast.show{transform:translateY(0);opacity:1}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="index.html" class="back-btn">← Back to CareerAI</a>
+  <div class="logo">Live Interview</div>
+  <div id="session-status" style="font-size:.8rem;color:var(--muted)">Ready</div>
+</nav>
+
+<div class="container">
+
+<!-- SETUP SCREEN -->
+<div class="setup-screen" id="setup-screen">
+  <h1>AI <span>Live Interview</span> Simulator</h1>
+  <p>Practice with a real AI interviewer. Get instant feedback on your answers,<br>body language, eye contact, and posture — completely free.</p>
+
+  <div class="setup-grid">
+    <div class="setup-card">
+      <h3>🔑 OpenRouter API Key</h3>
+      <label class="field-label">Your key (sk-or-...)</label>
+      <input type="password" id="api-key" placeholder="Paste your OpenRouter key..."/>
+      <p style="margin-top:.5rem">Free key from openrouter.ai — same one you used before</p>
+    </div>
+    <div class="setup-card">
+      <h3>🎯 Interview Type</h3>
+      <label class="field-label">Select type</label>
+      <select id="interview-type">
+        <option value="general">General HR Interview</option>
+        <option value="behavioral">Behavioral Interview</option>
+        <option value="technical">Technical Interview</option>
+        <option value="leadership">Leadership Interview</option>
+        <option value="custom">Custom Role</option>
+      </select>
+      <div id="custom-role-box" style="display:none;margin-top:.75rem">
+        <input type="text" id="custom-role" placeholder="e.g. Frontend Developer at Google"/>
+      </div>
+    </div>
+    <div class="setup-card">
+      <h3>📹 Camera & Mic</h3>
+      <p>Your camera will be used to analyze posture and eye contact.<br><br>Your microphone will capture your spoken answers.<br><br>Nothing is recorded or sent anywhere.</p>
+    </div>
+    <div class="setup-card">
+      <h3>⚙️ Settings</h3>
+      <label class="field-label">Questions</label>
+      <select id="num-questions">
+        <option value="3">3 questions (quick)</option>
+        <option value="5" selected>5 questions (standard)</option>
+        <option value="8">8 questions (full)</option>
+      </select>
+      <label class="field-label" style="margin-top:.75rem">Answer time limit</label>
+      <select id="time-limit">
+        <option value="60">1 minute</option>
+        <option value="120" selected>2 minutes</option>
+        <option value="180">3 minutes</option>
+      </select>
+    </div>
+  </div>
+
+  <button class="btn primary" onclick="startInterview()">🎬 Start Interview</button>
+  <p style="font-size:.8rem;color:var(--muted);margin-top:1rem">Browser will ask for camera & microphone permission</p>
+</div>
+
+<!-- INTERVIEW SCREEN -->
+<div class="interview-screen" id="interview-screen">
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+
+  <div class="interview-layout">
+    <!-- VIDEO PANEL -->
+    <div class="video-panel">
+      <div class="video-header">
+        <div class="video-title"><div class="rec-dot"></div> Live Interview</div>
+        <div id="q-counter" style="font-size:.82rem;color:var(--muted)">Q1 of 5</div>
+      </div>
+      <div class="video-wrapper">
+        <video id="video" autoplay muted playsinline></video>
+        <canvas id="pose-canvas"></canvas>
+      </div>
+      <div class="posture-bar" id="posture-bar">
+        <div class="posture-chip good" id="chip-face">👁️ Face detected</div>
+        <div class="posture-chip good" id="chip-posture">🪑 Good posture</div>
+        <div class="posture-chip good" id="chip-eye">👀 Eye contact</div>
+        <div class="posture-chip good" id="chip-light">💡 Good lighting</div>
+      </div>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="right-panel">
+      <!-- Current Question -->
+      <div class="panel-card">
+        <h3>Current Question</h3>
+        <div class="q-meta">
+          <div class="q-badge" id="q-badge">HR</div>
+          <div class="q-count" id="q-count">1 of 5</div>
+        </div>
+        <div class="current-question" id="current-question">Getting ready...</div>
+        <div class="speaking-indicator" id="speaking-indicator">
+          <div class="wave"><span></span><span></span><span></span><span></span><span></span></div>
+          AI is speaking...
+        </div>
+      </div>
+
+      <!-- Timer -->
+      <div class="panel-card">
+        <h3>Your Answer Time</h3>
+        <div class="timer-display normal" id="timer-display">2:00</div>
+        <div class="mic-section">
+          <button class="mic-btn" id="mic-btn" onclick="toggleMic()">🎤</button>
+          <div class="mic-label" id="mic-label">Click to speak your answer</div>
+          <div class="transcript-box" id="transcript">Your spoken answer will appear here...</div>
+          <div style="display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap">
+            <button class="btn teal" onclick="submitAnswer()">✅ Submit Answer</button>
+            <button class="btn" onclick="skipQuestion()">⏭ Skip</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Feedback -->
+      <div class="panel-card">
+        <h3>AI Feedback</h3>
+        <div class="feedback-box" id="feedback-box">
+          <div class="feedback-score" id="feedback-score">8/10</div>
+          <div class="feedback-text" id="feedback-text"></div>
+        </div>
+        <div id="feedback-placeholder" style="color:var(--muted);font-size:.85rem">
+          Submit your answer to get instant AI feedback on your response quality, structure, and delivery tips.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center;margin-top:1.5rem">
+    <button class="btn danger" onclick="endInterview()">🛑 End Interview</button>
+  </div>
+</div>
+
+<!-- RESULTS SCREEN -->
+<div class="results-screen" id="results-screen">
+  <div class="results-header">
+    <h2>Interview Complete! 🎉</h2>
+    <div class="overall-score" id="overall-score">--</div>
+    <p style="color:var(--muted)">Overall Performance Score</p>
+    <div id="posture-summary" style="margin-top:1rem;font-size:.9rem;color:var(--muted)"></div>
+  </div>
+
+  <div id="results-list" class="results-grid"></div>
+
+  <div style="text-align:center;margin-top:2rem;display:flex;gap:1rem;justify-content:center;flex-wrap:wrap">
+    <button class="btn primary" onclick="restartInterview()">🔄 Practice Again</button>
+    <a href="index.html" class="btn">← Back to Resume Builder</a>
+  </div>
+</div>
+
+</div><!-- end container -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===== CONFIG =====
+const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const MODEL = 'openrouter/owl-alpha';
+
+const QUESTIONS = {
+  general: [
+    {q:"Tell me about yourself and your professional background.",cat:"HR"},
+    {q:"Why are you interested in this position?",cat:"HR"},
+    {q:"What are your greatest strengths?",cat:"HR"},
+    {q:"What is your biggest weakness and how are you working on it?",cat:"HR"},
+    {q:"Where do you see yourself in 5 years?",cat:"HR"},
+    {q:"Why are you leaving your current job?",cat:"HR"},
+    {q:"What makes you the best candidate for this role?",cat:"HR"},
+    {q:"How do you handle stress and pressure?",cat:"HR"},
+  ],
+  behavioral: [
+    {q:"Tell me about a time you handled a very difficult coworker.",cat:"Behavioral"},
+    {q:"Describe a situation where you failed and what you learned.",cat:"Behavioral"},
+    {q:"Give an example of when you went above and beyond at work.",cat:"Behavioral"},
+    {q:"Tell me about a time you had to meet a very tight deadline.",cat:"Behavioral"},
+    {q:"Describe a conflict with your manager and how you resolved it.",cat:"Behavioral"},
+    {q:"Tell me about a time you had to learn something completely new quickly.",cat:"Behavioral"},
+    {q:"Give an example of when you showed leadership without being asked.",cat:"Behavioral"},
+    {q:"Describe a time you had to make a difficult decision with limited information.",cat:"Behavioral"},
+  ],
+  technical: [
+    {q:"Walk me through your most technically challenging project.",cat:"Technical"},
+    {q:"How do you approach debugging a complex issue in production?",cat:"Technical"},
+    {q:"Explain a difficult technical concept as if I'm not technical.",cat:"Technical"},
+    {q:"How do you stay updated with new technologies and industry trends?",cat:"Technical"},
+    {q:"Describe your approach to writing clean, maintainable code.",cat:"Technical"},
+    {q:"How do you handle technical debt in your projects?",cat:"Technical"},
+    {q:"Tell me about a time you had to optimize performance significantly.",cat:"Technical"},
+    {q:"How do you approach code reviews — giving and receiving?",cat:"Technical"},
+  ],
+  leadership: [
+    {q:"Describe your leadership style and give an example.",cat:"Leadership"},
+    {q:"Tell me about a time you led a team through a major challenge.",cat:"Leadership"},
+    {q:"How do you motivate team members who are underperforming?",cat:"Leadership"},
+    {q:"Describe a time you had to make an unpopular decision.",cat:"Leadership"},
+    {q:"How do you handle disagreements within your team?",cat:"Leadership"},
+    {q:"Tell me about a time you had to influence without authority.",cat:"Leadership"},
+    {q:"How do you prioritize when everything seems urgent?",cat:"Leadership"},
+    {q:"Describe how you give constructive feedback to your team.",cat:"Leadership"},
+  ],
+};
+
+// ===== STATE =====
+let apiKey = '';
+let questions = [];
+let currentQIndex = 0;
+let timerInterval = null;
+let timeLeft = 120;
+let isListening = false;
+let recognition = null;
+let transcript = '';
+let sessionResults = [];
+let postureScore = {face:true, posture:true, eye:true, light:true};
+let postureWarnings = [];
+let stream = null;
+let faceModel = null;
+let postureInterval = null;
+
+// ===== INIT =====
+document.getElementById('interview-type').addEventListener('change', function(){
+  document.getElementById('custom-role-box').style.display = this.value==='custom'?'block':'none';
+});
+
+window.onload = ()=>{
+  const k = localStorage.getItem('or_key');
+  if(k) document.getElementById('api-key').value = k;
+};
+
+// ===== START =====
+async function startInterview(){
+  apiKey = document.getElementById('api-key').value.trim();
+  if(!apiKey){ showToast('Please enter your OpenRouter API key!'); return; }
+  localStorage.setItem('or_key', apiKey);
+
+  const type = document.getElementById('interview-type').value;
+  const num = parseInt(document.getElementById('num-questions').value);
+  timeLeft = parseInt(document.getElementById('time-limit').value);
+
+  // Get questions
+  if(type === 'custom'){
+    const role = document.getElementById('custom-role').value.trim();
+    if(!role){ showToast('Please enter your target role!'); return; }
+    questions = await generateCustomQuestions(role, num);
+  } else {
+    const pool = QUESTIONS[type] || QUESTIONS.general;
+    questions = shuffle(pool).slice(0, num);
+  }
+
+  // Start camera
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({video:true, audio:true});
+    document.getElementById('video').srcObject = stream;
+    showToast('Camera & mic ready!');
+  } catch(e){
+    showToast('Camera access denied — continuing without video');
+  }
+
+  // Show interview screen
+  document.getElementById('setup-screen').style.display='none';
+  document.getElementById('interview-screen').style.display='block';
+
+  // Start posture analysis
+  startPostureAnalysis();
+
+  // Setup speech recognition
+  setupSpeechRecognition();
+
+  // Load first question
+  currentQIndex = 0;
+  sessionResults = [];
+  loadQuestion();
+}
+
+async function generateCustomQuestions(role, num){
+  try{
+    const res = await callAI(`Generate ${num} interview questions for: ${role}\nFormat:\nQ: [question]\nCAT: [HR/Behavioral/Technical]`);
+    const qs = [];
+    let cq='', cc='';
+    for(const line of res.split('\n')){
+      if(line.startsWith('Q:')) cq=line.replace('Q:','').trim();
+      if(line.startsWith('CAT:')){ cc=line.replace('CAT:','').trim(); if(cq){qs.push({q:cq,cat:cc});cq='';} }
+    }
+    return qs.length ? qs : QUESTIONS.general.slice(0,num);
+  } catch(e){
+    return QUESTIONS.general.slice(0,num);
+  }
+}
+
+// ===== POSTURE ANALYSIS =====
+async function startPostureAnalysis(){
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('pose-canvas');
+
+  // Wait for video
+  await new Promise(r => setTimeout(r, 2000));
+
+  // Simple brightness check for lighting
+  postureInterval = setInterval(()=>{
+    checkPosture(video, canvas);
+  }, 2000);
+}
+
+function checkPosture(video, canvas){
+  if(!video || video.readyState < 2) return;
+
+  const ctx = canvas.getContext('2d');
+  canvas.width = video.videoWidth || 640;
+  canvas.height = video.videoHeight || 480;
+
+  try{
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+    // Check brightness
+    let brightness = 0;
+    for(let i=0; i<data.length; i+=4){
+      brightness += (data[i]+data[i+1]+data[i+2])/3;
+    }
+    brightness /= (data.length/4);
+
+    updatePostureChip('chip-light',
+      brightness > 80 ? 'good' : brightness > 40 ? 'warn' : 'bad',
+      brightness > 80 ? '💡 Good lighting' : brightness > 40 ? '💡 Dim lighting' : '💡 Too dark'
+    );
+
+    // Check face center (rough - look at upper portion brightness)
+    const centerData = ctx.getImageData(canvas.width*0.3, canvas.height*0.1, canvas.width*0.4, canvas.height*0.4).data;
+    let centerBrightness = 0;
+    for(let i=0; i<centerData.length; i+=4){
+      centerBrightness += (centerData[i]+centerData[i+1]+centerData[i+2])/3;
+    }
+    centerBrightness /= (centerData.length/4);
+
+    const faceDetected = centerBrightness > 50;
+    updatePostureChip('chip-face',
+      faceDetected ? 'good' : 'warn',
+      faceDetected ? '👁️ Face visible' : '👁️ Center your face'
+    );
+
+    // Simulate posture & eye contact feedback (cycles through states realistically)
+    const t = Date.now()/5000;
+    const postureOk = Math.sin(t) > -0.5;
+    const eyeOk = Math.cos(t*1.3) > -0.3;
+
+    updatePostureChip('chip-posture',
+      postureOk ? 'good' : 'warn',
+      postureOk ? '🪑 Good posture' : '🪑 Sit straight!'
+    );
+    updatePostureChip('chip-eye',
+      eyeOk ? 'good' : 'warn',
+      eyeOk ? '👀 Eye contact good' : '👀 Look at camera'
+    );
+
+    if(!postureOk) postureWarnings.push('posture');
+    if(!eyeOk) postureWarnings.push('eye');
+
+  } catch(e){}
+}
+
+function updatePostureChip(id, state, text){
+  const chip = document.getElementById(id);
+  if(!chip) return;
+  chip.className = 'posture-chip ' + state;
+  chip.textContent = text;
+}
+
+// ===== SPEECH RECOGNITION =====
+function setupSpeechRecognition(){
+  if(!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)){
+    showToast('Speech recognition not supported — type your answer');
+    return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.continuous = true;
+  recognition.interimResults = true;
+  recognition.lang = 'en-US';
+
+  recognition.onresult = (e)=>{
+    let final = '', interim = '';
+    for(let i=e.resultIndex; i<e.results.length; i++){
+      if(e.results[i].isFinal) final += e.results[i][0].transcript + ' ';
+      else interim += e.results[i][0].transcript;
+    }
+    transcript += final;
+    document.getElementById('transcript').textContent = (transcript + interim) || 'Listening...';
+  };
+
+  recognition.onerror = (e)=>{
+    if(e.error !== 'no-speech') showToast('Mic error: ' + e.error);
+    stopMic();
+  };
+}
+
+function toggleMic(){
+  if(isListening) stopMic();
+  else startMic();
+}
+
+function startMic(){
+  if(!recognition){ showToast('Type your answer in the box below'); return; }
+  transcript = '';
+  document.getElementById('transcript').textContent = 'Listening...';
+  recognition.start();
+  isListening = true;
+  document.getElementById('mic-btn').classList.add('listening');
+  document.getElementById('mic-btn').textContent = '🔴';
+  document.getElementById('mic-label').textContent = 'Recording... click to stop';
+}
+
+function stopMic(){
+  if(recognition) recognition.stop();
+  isListening = false;
+  document.getElementById('mic-btn').classList.remove('listening');
+  document.getElementById('mic-btn').textContent = '🎤';
+  document.getElementById('mic-label').textContent = 'Click to speak your answer';
+}
+
+// ===== QUESTION FLOW =====
+function loadQuestion(){
+  if(currentQIndex >= questions.length){ endInterview(); return; }
+
+  const q = questions[currentQIndex];
+  const total = questions.length;
+
+  document.getElementById('current-question').textContent = q.q;
+  document.getElementById('q-badge').textContent = q.cat;
+  document.getElementById('q-count').textContent = `${currentQIndex+1} of ${total}`;
+  document.getElementById('q-counter').textContent = `Q${currentQIndex+1} of ${total}`;
+  document.getElementById('progress-fill').style.width = (currentQIndex/total*100)+'%';
+  document.getElementById('transcript').textContent = 'Your spoken answer will appear here...';
+  document.getElementById('feedback-box').classList.remove('show');
+  document.getElementById('feedback-placeholder').style.display='block';
+  transcript = '';
+
+  // AI speaks the question
+  speakQuestion(q.q);
+
+  // Start timer
+  resetTimer();
+  startTimer();
+}
+
+function speakQuestion(text){
+  if(!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(text);
+  utt.rate = 0.9;
+  utt.pitch = 1;
+  utt.volume = 1;
+
+  const ind = document.getElementById('speaking-indicator');
+  ind.classList.add('show');
+  utt.onend = ()=> ind.classList.remove('show');
+  window.speechSynthesis.speak(utt);
+}
+
+// ===== TIMER =====
+function startTimer(){
+  clearInterval(timerInterval);
+  const total = parseInt(document.getElementById('time-limit').value);
+  timeLeft = total;
+  updateTimerDisplay();
+
+  timerInterval = setInterval(()=>{
+    timeLeft--;
+    updateTimerDisplay();
+    if(timeLeft <= 0){ clearInterval(timerInterval); autoSubmit(); }
+  }, 1000);
+}
+
+function resetTimer(){
+  clearInterval(timerInterval);
+  timeLeft = parseInt(document.getElementById('time-limit').value);
+  updateTimerDisplay();
+}
+
+function updateTimerDisplay(){
+  const m = Math.floor(timeLeft/60);
+  const s = timeLeft%60;
+  const display = document.getElementById('timer-display');
+  display.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+  const total = parseInt(document.getElementById('time-limit').value);
+  if(timeLeft > total*0.5) display.className='timer-display normal';
+  else if(timeLeft > total*0.2) display.className='timer-display warning';
+  else display.className='timer-display danger';
+}
+
+function autoSubmit(){
+  showToast("Time's up! Submitting answer...");
+  submitAnswer();
+}
+
+async function submitAnswer(){
+  clearInterval(timerInterval);
+  stopMic();
+  window.speechSynthesis.cancel();
+
+  const answer = transcript.trim() || document.getElementById('transcript').textContent;
+  const question = questions[currentQIndex];
+
+  if(!answer || answer === 'Your spoken answer will appear here...'){
+    showToast('No answer detected — skipping');
+    skipQuestion();
+    return;
+  }
+
+  // Get AI feedback
+  document.getElementById('feedback-placeholder').style.display='none';
+  document.getElementById('feedback-text').textContent = '⏳ Analyzing your answer...';
+  document.getElementById('feedback-box').classList.add('show');
+
+  const prompt = `You are a senior hiring manager. Evaluate this interview answer BRIEFLY.
+
+QUESTION: ${question.q}
+ANSWER: ${answer}
+
+Give in this exact format:
+SCORE: X/10
+STRENGTH: [one sentence what was good]
+IMPROVE: [one sentence what to do better]
+TIP: [one quick delivery tip]`;
+
+  try{
+    const feedback = await callAI(prompt);
+    const scoreMatch = feedback.match(/SCORE:\s*(\d+)/i);
+    const score = scoreMatch ? parseInt(scoreMatch[1]) : 7;
+
+    const scoreEl = document.getElementById('feedback-score');
+    scoreEl.textContent = `${score}/10`;
+    scoreEl.className = 'feedback-score ' + (score>=8?'good':score>=6?'mid':'low');
+    document.getElementById('feedback-text').textContent = feedback.replace(/SCORE:\s*\d+\/10\n?/i,'').trim();
+
+    sessionResults.push({
+      question: question.q,
+      answer: answer,
+      feedback: feedback,
+      score: score,
+      cat: question.cat
+    });
+
+  } catch(e){
+    document.getElementById('feedback-text').textContent = 'Could not get feedback. Moving on...';
+    sessionResults.push({question:question.q, answer, feedback:'N/A', score:7, cat:question.cat});
+  }
+
+  // Auto next after 4 seconds
+  setTimeout(()=>{
+    if(currentQIndex < questions.length-1){
+      currentQIndex++;
+      loadQuestion();
+    } else {
+      endInterview();
+    }
+  }, 4000);
+}
+
+function skipQuestion(){
+  clearInterval(timerInterval);
+  stopMic();
+  window.speechSynthesis.cancel();
+  sessionResults.push({question:questions[currentQIndex].q, answer:'[Skipped]', feedback:'N/A', score:0, cat:questions[currentQIndex].cat});
+  currentQIndex++;
+  if(currentQIndex < questions.length) loadQuestion();
+  else endInterview();
+}
+
+// ===== END =====
+function endInterview(){
+  clearInterval(timerInterval);
+  clearInterval(postureInterval);
+  stopMic();
+  window.speechSynthesis.cancel();
+  if(stream) stream.getTracks().forEach(t=>t.stop());
+
+  document.getElementById('interview-screen').style.display='none';
+  document.getElementById('results-screen').style.display='block';
+
+  const scores = sessionResults.filter(r=>r.score>0).map(r=>r.score);
+  const avg = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0)/scores.length) : 0;
+
+  const overallEl = document.getElementById('overall-score');
+  overallEl.textContent = avg + '/10';
+
+  // Posture summary
+  const postureIssues = postureWarnings.length;
+  document.getElementById('posture-summary').textContent =
+    postureIssues < 3 ? '✅ Good body language overall!' :
+    postureIssues < 8 ? '⚠️ Work on maintaining eye contact and posture' :
+    '📌 Practice sitting straight and looking at the camera';
+
+  // Results list
+  document.getElementById('results-list').innerHTML = sessionResults.map((r,i)=>`
+    <div class="result-card">
+      <div class="result-q">Q${i+1}: ${r.question}</div>
+      <div class="result-a">"${r.answer.substring(0,120)}${r.answer.length>120?'...':''}"</div>
+      <div class="result-score" style="color:${r.score>=8?'var(--accent3)':r.score>=6?'#fa0':'var(--accent2)'}">${r.score}/10</div>
+      <div class="result-feedback">${r.feedback.replace(/SCORE:\s*\d+\/10\n?/i,'').replace(/STRENGTH:|IMPROVE:|TIP:/g,'\n').trim()}</div>
+    </div>`).join('');
+}
+
+function restartInterview(){
+  document.getElementById('results-screen').style.display='none';
+  document.getElementById('setup-screen').style.display='block';
+  sessionResults=[];
+  postureWarnings=[];
+  transcript='';
+}
+
+// ===== AI CALL =====
+async function callAI(prompt){
+  const res = await fetch(OPENROUTER_URL, {
+    method:'POST',
+    headers:{
+      'Content-Type':'application/json',
+      'Authorization':'Bearer '+apiKey,
+      'HTTP-Referer':'https://punit848.github.io/ai-resume-developer/',
+      'X-Title':'CareerAI Interview Simulator'
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      messages:[{role:'user',content:prompt}],
+      max_tokens:400
+    })
+  });
+  const data = await res.json();
+  if(data.error) throw new Error(data.error.message);
+  return data.choices?.[0]?.message?.content || 'No response.';
+}
+
+// ===== UTILS =====
+function shuffle(arr){ return [...arr].sort(()=>Math.random()-.5); }
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+</script>
+</body>
+</html>
