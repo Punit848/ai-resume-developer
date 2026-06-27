@@ -244,38 +244,46 @@ textarea::placeholder{color:var(--dim)}
 
 <script>
 // ====== CONFIG ======
-const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=";
+const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 
 // ====== KEY MANAGEMENT ======
 function getKey(){
-  return document.getElementById('apikey').value.trim() || localStorage.getItem('gemini_key') || '';
+  return document.getElementById('apikey').value.trim() || localStorage.getItem('or_key') || '';
 }
 function saveKey(){
   const k = document.getElementById('apikey').value.trim();
-  if(!k){ alert('Please paste your Gemini API key first!'); return; }
-  localStorage.setItem('gemini_key', k);
+  if(!k){ alert('Please paste your OpenRouter API key first!'); return; }
+  localStorage.setItem('or_key', k);
   document.getElementById('key-status').textContent = '✅ Key saved!';
   setTimeout(()=>document.getElementById('key-status').textContent='',3000);
   showToast('API key saved!');
 }
 window.onload = ()=>{
-  const k = localStorage.getItem('gemini_key');
+  const k = localStorage.getItem('or_key');
   if(k){ document.getElementById('apikey').value = k; document.getElementById('key-status').textContent = '✅ Key loaded'; }
 };
 
-// ====== GEMINI API CALL ======
+// ====== OPENROUTER API CALL ======
 async function callGemini(prompt){
   const key = getKey();
-  if(!key){ alert('Please paste your Gemini API key and click Save!'); return null; }
+  if(!key){ alert('Please paste your OpenRouter API key and click Save!'); return null; }
   try{
-    const res = await fetch(GEMINI_URL + key, {
+    const res = await fetch(OPENROUTER_URL, {
       method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ contents:[{ parts:[{ text: prompt }] }] })
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer ' + key,
+        'HTTP-Referer':'https://punit848.github.io/ai-resume-developer/',
+        'X-Title':'CareerAI Resume Developer'
+      },
+      body: JSON.stringify({
+        model: 'meta-llama/llama-3.3-8b-instruct:free',
+        messages:[{ role:'user', content: prompt }]
+      })
     });
     const data = await res.json();
     if(data.error){ alert('API Error: ' + data.error.message); return null; }
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response.';
+    return data.choices?.[0]?.message?.content || 'No response.';
   } catch(e){
     alert('Network error: ' + e.message);
     return null;
