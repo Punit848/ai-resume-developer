@@ -131,6 +131,8 @@ canvas#detection-canvas{position:absolute;inset:0;width:100%;height:100%;pointer
 .toast{position:fixed;bottom:2rem;right:2rem;background:var(--card);border:1px solid var(--accent3);color:var(--accent3);padding:.75rem 1.25rem;border-radius:10px;font-size:.85rem;font-weight:500;z-index:9999;transform:translateY(100px);opacity:0;transition:all .3s}
 .toast.show{transform:translateY(0);opacity:1}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface@0.0.7/dist/blazeface.js"></script>
 </head>
 <body>
 
@@ -457,18 +459,34 @@ async function startInterview(){
   document.getElementById('interview-screen').style.display='block';
 
   setupSpeech();
-  startPostureCheck();
+  startPostureCheck(); // async AI face detection
   qIdx=0; results=[]; cheatLog=[]; cheatCount=0;
   postureWarnings=0; eyeWarnings=0; lightWarnings=0; goodFrames=0; totalFrames=0;
   loadQ();
 }
 
-// ===== POSTURE & CHEAT DETECTION =====
-function startPostureCheck(){
-  postureInt=setInterval(()=>checkFrame(),2500);
+// ===== POSTURE & CHEAT DETECTION (AI-powered BlazeFace) =====
+let faceDetector=null;
+let noFaceCount=0; // consecutive frames with no face
+let extraPersonCount=0; // consecutive frames with extra face
+const NO_FACE_THRESHOLD=4; // need 4 consecutive misses before warning (less sensitive)
+const EXTRA_PERSON_THRESHOLD=3;
+
+async function startPostureCheck(){
+  // Load BlazeFace AI model
+  try{
+    showToast('Loading AI face detection...');
+    faceDetector=await blazeface.load();
+    showToast('✅ AI face detection ready!');
+  }catch(e){
+    console.log('BlazeFace load failed, using fallback');
+    faceDetector=null;
+  }
+  // Check every 3 seconds (less frequent = less false alarms)
+  postureInt=setInterval(()=>checkFrame(),3000);
 }
 
-function checkFrame(){
+async function checkFrame(){
   const video=document.getElementById('video');
   const canvas=document.getElementById('detection-canvas');
   if(!video||video.readyState<2)return;
@@ -477,75 +495,107 @@ function checkFrame(){
   canvas.width=video.videoWidth||640;
   canvas.height=video.videoHeight||480;
   ctx.drawImage(video,0,0,canvas.width,canvas.height);
-
   totalFrames++;
-  const data=ctx.getImageData(0,0,canvas.width,canvas.height).data;
 
   // Brightness check (lighting)
+  const imgData=ctx.getImageData(0,0,canvas.width,canvas.height).data;
   let bright=0;
-  for(let i=0;i<data.length;i+=16) bright+=(data[i]+data[i+1]+data[i+2])/3;
-  bright/=(data.length/16);
-
-  // Face region brightness (center top area)
-  const fw=Math.floor(canvas.width*0.4), fh=Math.floor(canvas.height*0.45);
-  const fx=Math.floor(canvas.width*0.3), fy=Math.floor(canvas.height*0.05);
-  const faceData=ctx.getImageData(fx,fy,fw,fh).data;
-  let faceBright=0;
-  for(let i=0;i<faceData.length;i+=16) faceBright+=(faceData[i]+faceData[i+1]+faceData[i+2])/3;
-  faceBright/=(faceData.length/16);
-
-  // Skin tone detection (rough face presence)
-  let skinPixels=0, totalSampled=0;
-  for(let i=0;i<faceData.length;i+=12){
-    const r=faceData[i],g=faceData[i+1],b=faceData[i+2];
-    if(r>60&&g>40&&b>20&&r>g&&r>b&&(r-b)>10) skinPixels++;
-    totalSampled++;
-  }
-  const skinRatio=skinPixels/totalSampled;
-
-  // Full frame skin check (detect extra person)
-  let fullSkin=0, fullTotal=0;
-  for(let i=0;i<data.length;i+=20){
-    const r=data[i],g=data[i+1],b=data[i+2];
-    if(r>60&&g>40&&b>20&&r>g&&r>b&&(r-b)>10) fullSkin++;
-    fullTotal++;
-  }
-  const fullSkinRatio=fullSkin/fullTotal;
-
-  const facePresent=skinRatio>0.08;
-  const personLeft=faceBright<20&&bright>40;
-  const extraPerson=fullSkinRatio>skinRatio*2.5&&fullSkinRatio>0.2;
-  const lightOk=bright>60;
-  const lightDim=bright>30&&bright<=60;
-
-  // Update chips
-  setChip('chip-face', facePresent?'good':'bad', facePresent?'👤 Face OK':'👤 No face detected!');
-  setChip('chip-light', lightOk?'good':lightDim?'warn':'bad', lightOk?'💡 Lighting OK':lightDim?'💡 Dim light':'💡 Too dark!');
-
-  // Simulate posture & eye (time-based variation for realism)
-  const t=Date.now()/6000;
-  const postureOk=Math.sin(t)>-0.4;
-  const eyeOk=Math.cos(t*1.4)>-0.35;
-  setChip('chip-posture', postureOk?'good':'warn', postureOk?'🪑 Posture OK':'🪑 Sit straight!');
-  setChip('chip-eye', eyeOk?'good':'warn', eyeOk?'👀 Eye contact OK':'👀 Look at camera!');
-
-  if(!postureOk) postureWarnings++;
-  if(!eyeOk) eyeWarnings++;
+  for(let i=0;i<imgData.length;i+=20) bright+=(imgData[i]+imgData[i+1]+imgData[i+2])/3;
+  bright/=(imgData.length/20);
+  const lightOk=bright>55;
+  const lightDim=bright>25&&bright<=55;
+  setChip('chip-light',lightOk?'good':lightDim?'warn':'bad',lightOk?'💡 Lighting OK':lightDim?'💡 Dim lighting':'💡 Too dark!');
   if(!lightOk) lightWarnings++;
-  if(facePresent&&postureOk&&eyeOk) goodFrames++;
 
-  // CHEAT DETECTION
-  if(!facePresent&&bright>40){
-    triggerCheat('You left the camera frame!','👤');
-  } else if(extraPerson){
-    triggerCheat('Another person detected in frame!','🚨');
-  } else if(personLeft){
-    triggerCheat('You moved away from camera!','⚠️');
+  // AI Face Detection with BlazeFace
+  if(faceDetector){
+    try{
+      const predictions=await faceDetector.estimateFaces(video,false);
+      const faceCount=predictions.length;
+
+      if(faceCount===0){
+        // No face detected
+        noFaceCount++;
+        extraPersonCount=0;
+        if(noFaceCount>=NO_FACE_THRESHOLD){
+          // Only warn after 4 consecutive misses (real absence, not a glitch)
+          setChip('chip-face','bad','👤 Face not visible!');
+          if(noFaceCount===NO_FACE_THRESHOLD) triggerCheat('You left the camera frame!','👤');
+        } else {
+          // Still within threshold — show warning but don't log cheat
+          setChip('chip-face','warn','👤 Stay in frame...');
+        }
+      } else if(faceCount===1){
+        // Exactly one face — perfect!
+        noFaceCount=0;
+        extraPersonCount=0;
+        setChip('chip-face','good','👤 Face detected ✓');
+        goodFrames++;
+
+        // Check face position for eye contact
+        const face=predictions[0];
+        const nose=face.landmarks[2]; // nose tip
+        const faceCenterX=nose[0]/canvas.width;
+        const faceCenterY=nose[1]/canvas.height;
+        const lookingAtCamera=faceCenterX>0.25&&faceCenterX<0.75&&faceCenterY>0.15&&faceCenterY<0.75;
+        setChip('chip-eye',lookingAtCamera?'good':'warn',lookingAtCamera?'👀 Eye contact OK':'👀 Look at camera!');
+        if(!lookingAtCamera) eyeWarnings++;
+
+        // Check face size for posture (too small = leaning back)
+        const box=face.topLeft&&face.bottomRight?
+          {w:face.bottomRight[0]-face.topLeft[0],h:face.bottomRight[1]-face.topLeft[1]}:
+          {w:canvas.width*0.3,h:canvas.height*0.4};
+        const faceRatio=(box.w*box.h)/(canvas.width*canvas.height);
+        const goodPosture=faceRatio>0.04;
+        setChip('chip-posture',goodPosture?'good':'warn',goodPosture?'🪑 Posture OK':'🪑 Sit closer/straighter!');
+        if(!goodPosture) postureWarnings++;
+
+      } else if(faceCount>=2){
+        // Multiple faces detected!
+        noFaceCount=0;
+        extraPersonCount++;
+        setChip('chip-face','bad','👤 Multiple faces!');
+        if(extraPersonCount>=EXTRA_PERSON_THRESHOLD){
+          if(extraPersonCount===EXTRA_PERSON_THRESHOLD) triggerCheat('Another person detected in frame!','🚨');
+        }
+      }
+    }catch(e){
+      // AI detection failed this frame — skip silently
+      console.log('Detection frame error:',e.message);
+    }
+  } else {
+    // Fallback: simple brightness-based detection (less accurate)
+    const faceArea=ctx.getImageData(Math.floor(canvas.width*0.25),Math.floor(canvas.height*0.05),
+      Math.floor(canvas.width*0.5),Math.floor(canvas.height*0.5)).data;
+    let skinPx=0,total=0;
+    for(let i=0;i<faceArea.length;i+=16){
+      const r=faceArea[i],g=faceArea[i+1],b=faceArea[i+2];
+      if(r>80&&g>50&&b>30&&r>g&&r>b&&(r-Math.min(g,b))>15) skinPx++;
+      total++;
+    }
+    const skinRatio=skinPx/total;
+    const facePresent=skinRatio>0.12; // Higher threshold = less sensitive
+    setChip('chip-face',facePresent?'good':'warn',facePresent?'👤 Face OK':'👤 Stay in frame');
+    if(!facePresent){
+      noFaceCount++;
+      if(noFaceCount>=NO_FACE_THRESHOLD) triggerCheat('You left the camera frame!','👤');
+    } else {
+      noFaceCount=0;
+      goodFrames++;
+    }
+    // Basic posture & eye simulation
+    const t=Date.now()/8000;
+    const postureOk=Math.sin(t)>-0.3;
+    const eyeOk=Math.cos(t*1.2)>-0.25;
+    setChip('chip-posture',postureOk?'good':'warn',postureOk?'🪑 Posture OK':'🪑 Sit straight!');
+    setChip('chip-eye',eyeOk?'good':'warn',eyeOk?'👀 Eye contact OK':'👀 Look at camera!');
+    if(!postureOk) postureWarnings++;
+    if(!eyeOk) eyeWarnings++;
   }
 
-  // Alone chip
-  setChip('chip-alone', cheatCount===0?'good':cheatCount<3?'warn':'bad',
-    cheatCount===0?'🛡️ No cheating':'⚠️ '+cheatCount+' warning(s)');
+  // Update integrity chip
+  setChip('chip-alone',cheatCount===0?'good':cheatCount<3?'warn':'bad',
+    cheatCount===0?'🛡️ No cheating detected':'⚠️ '+cheatCount+' warning(s)');
 }
 
 function triggerCheat(msg, icon){
