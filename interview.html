@@ -727,14 +727,14 @@ IMPROVE: [one sentence]`;
   try{
     const fb=await callAI(prompt);
     const sm=fb.match(/SCORE:\s*(\d+)/i);
-    const score=sm?parseInt(sm[1]):7;
+    const score=sm?parseInt(sm[1]):5;
     const el=document.getElementById('fb-score');
     el.textContent=score+'/10';
     el.className='fb-score '+(score>=8?'g':score>=6?'m':'l');
     document.getElementById('fb-text').textContent=fb.replace(/SCORE:\s*\d+\/10\n?/i,'').trim();
     results.push({q:q.q,a:ans,fb,score,cat:q.c});
   }catch(e){
-    results.push({q:q.q,a:ans,fb:'N/A',score:7,cat:q.c});
+    results.push({q:q.q,a:ans,fb:'N/A',score:0,cat:q.c});
   }
 
   setTimeout(()=>{qIdx++;qIdx<questions.length?loadQ():endInterview();},3500);
