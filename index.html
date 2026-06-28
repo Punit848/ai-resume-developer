@@ -227,9 +227,13 @@ textarea::placeholder{color:var(--dim)}
       <button class="btn" onclick="startTimer()" id="timer-btn">▶ Start</button>
     </div>
     <label class="fl">Your answer</label>
-    <textarea id="modal-answer" rows="6" placeholder="Type your answer here..."></textarea>
+    <div style="display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem">
+      <button id="modal-mic-btn" onclick="toggleModalMic()" style="width:44px;height:44px;border-radius:50%;border:2px solid var(--border);background:var(--surface);font-size:1.2rem;cursor:pointer;flex-shrink:0;transition:all .2s">🎤</button>
+      <div style="font-size:.78rem;color:var(--muted)" id="modal-mic-label">Click mic to speak</div>
+    </div>
+    <textarea id="modal-answer" rows="5" placeholder="Speak or type your answer here..."></textarea>
     <div class="action-row">
-      <button class="btn primary" onclick="getModalFeedback()">🤖 Get AI Feedback</button>
+      <button class="btn primary" onclick="stopModalMic();getModalFeedback()">🤖 Get AI Feedback</button>
       <button class="btn" onclick="closeModal()">Skip</button>
     </div>
     <div class="loading" id="modal-loading"><div class="spinner"></div><span>Evaluating...</span></div>
@@ -277,7 +281,7 @@ async function callGemini(prompt){
         'X-Title':'CareerAI Resume Developer'
       },
       body: JSON.stringify({
-        model: 'openrouter/owl-alpha',
+        model: 'meta-llama/llama-3.3-8b-instruct:free',
         messages:[{ role:'user', content: prompt }]
       })
     });
@@ -424,6 +428,39 @@ async function getModalFeedback(){
 }
 
 // ====== UTILS ======
+// Modal mic
+let modalRec=null,modalListening=false,modalTranscript='';
+function toggleModalMic(){modalListening?stopModalMic():startModalMic();}
+function startModalMic(){
+  if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)){showToast('Speech not supported');return;}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  modalRec=new SR();modalRec.continuous=true;modalRec.interimResults=true;modalRec.lang='en-US';
+  modalTranscript='';
+  modalRec.onresult=e=>{
+    let fin='',int='';
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      if(e.results[i].isFinal)fin+=e.results[i][0].transcript+' ';
+      else int+=e.results[i][0].transcript;
+    }
+    modalTranscript+=fin;
+    document.getElementById('modal-answer').value=modalTranscript+int;
+  };
+  modalRec.onerror=()=>stopModalMic();
+  modalRec.start();
+  modalListening=true;
+  document.getElementById('modal-mic-btn').textContent='🔴';
+  document.getElementById('modal-mic-btn').style.borderColor='var(--accent2)';
+  document.getElementById('modal-mic-label').textContent='Recording... click to stop';
+  startTimer();
+}
+function stopModalMic(){
+  if(modalRec)modalRec.stop();
+  modalListening=false;
+  document.getElementById('modal-mic-btn').textContent='🎤';
+  document.getElementById('modal-mic-btn').style.borderColor='var(--border)';
+  document.getElementById('modal-mic-label').textContent='Click mic to speak';
+}
+
 function showPage(name,el){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
