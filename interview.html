@@ -339,7 +339,7 @@ canvas#detection-canvas{position:absolute;inset:0;width:100%;height:100%;pointer
           <polygon points="100,106 94,112 106,112" fill="#cc6677"/>
 
           <!-- Tom smirk mouth -->
-          <path id="cat-mouth" d="M88 118 Q100 126 112 118" fill="none" stroke="#aa4455" stroke-width="2" stroke-linecap="round" class="cat-mouth"/>
+          <path id="cat-mouth" d="M86 122 Q100 132 114 122" fill="none" stroke="#aa4455" stroke-width="2" stroke-linecap="round" class="cat-mouth"/>
 
           <!-- Thick Tom whiskers - 3 each side -->
           <line x1="58" y1="106" x2="91" y2="109" stroke="white" stroke-width="1.5" opacity=".9"/>
@@ -364,6 +364,7 @@ canvas#detection-canvas{position:absolute;inset:0;width:100%;height:100%;pointer
 
       <div style="margin-top:1rem;display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap">
         <button class="btn primary" onclick="restartInterview()">🔄 Practice Again</button>
+        <button class="btn danger" onclick="window.speechSynthesis.cancel()" id="stop-btn">⏹ Stop Speaking</button>
         <a href="index.html" class="btn">← Resume Builder</a>
       </div>
     </div>
@@ -878,6 +879,7 @@ async function endInterview(){
 
   document.getElementById('interview-screen').style.display='none';
   document.getElementById('results-screen').style.display='block';
+  window.speechSynthesis.cancel(); // stop any lingering speech
 
   // Calculate scores
   const ansScores=results.map(r=>r.score);
@@ -915,7 +917,7 @@ async function endInterview(){
       </div>`).join('')+'</div>';
 
   // Cat bubble — get AI cat feedback
-  const catPrompt=`You are Mimi, a warm and encouraging cat interview coach. Give friendly, supportive feedback like a good mentor would. Start with "Meow!" then give honest but kind feedback. Be specific about what they did well and what to improve. Sound warm, friendly and encouraging — like a coach who genuinely wants them to succeed. Keep it to 4-5 sentences.
+  const catPrompt=`You are a friendly and encouraging interview coach. Give warm, honest, supportive feedback like a good mentor. Be specific about strengths and improvements. Sound professional but kind. Do NOT use any cat sounds, animal actions, or phrases like meow, purr, tail wagging, whiskers etc. Just speak as a friendly human coach. Keep it to 4-5 sentences.
 
 Stats:
 - Answer quality: ${ansAvg}/10
@@ -929,6 +931,8 @@ Give 3-4 sentences of warm, specific, actionable feedback. Mention what was good
   try{
     const catFb=await callAI(catPrompt);
     document.getElementById('cat-bubble').textContent=catFb;
+    const stopBtn=document.getElementById('stop-btn');
+    if(stopBtn) stopBtn.style.display='inline-flex';
     speakText(catFb);
   }catch(e){
     document.getElementById('cat-bubble').textContent=
