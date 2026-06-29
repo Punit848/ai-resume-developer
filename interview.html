@@ -98,22 +98,22 @@ canvas#detection-canvas{position:absolute;inset:0;width:100%;height:100%;pointer
 .cat-bubble{background:var(--card);border:1px solid var(--border);border-radius:18px 18px 18px 4px;padding:1.25rem 1.5rem;margin-bottom:1rem;font-size:.92rem;line-height:1.7;text-align:left;position:relative;min-height:80px}
 .cat-bubble::after{content:'';position:absolute;bottom:-10px;left:20px;width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:10px solid var(--border)}
 
-/* CAT SVG ANIMATION */
-.cat-svg{width:200px;height:220px;margin:0 auto;display:block}
+/* CAT SVG ANIMATION — kawaii grey tabby */
+.cat-svg{width:220px;height:240px;margin:0 auto;display:block}
 .cat-body{animation:catbob 2.5s ease-in-out infinite}
-@keyframes catbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-.cat-tail{transform-origin:15px 5px;animation:tailwag 2s ease-in-out infinite}
-@keyframes tailwag{0%,100%{transform:rotate(-20deg)}50%{transform:rotate(20deg)}}
-.cat-ear-l{transform-origin:20px 30px;animation:eartwitch 4s ease-in-out infinite}
-.cat-ear-r{transform-origin:20px 30px;animation:eartwitch 4s ease-in-out infinite .7s}
-@keyframes eartwitch{0%,85%,100%{transform:rotate(0)}92%{transform:rotate(-12deg)}}
-.cat-eye-l{transform-origin:20px 20px;animation:blinkeye 5s ease-in-out infinite}
-.cat-eye-r{transform-origin:20px 20px;animation:blinkeye 5s ease-in-out infinite .3s}
-@keyframes blinkeye{0%,45%,55%,100%{transform:scaleY(1)}50%{transform:scaleY(0.05)}}
+@keyframes catbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+.cat-tail{transform-origin:108px 195px;animation:tailwag 2s ease-in-out infinite}
+@keyframes tailwag{0%,100%{transform:rotate(-18deg)}50%{transform:rotate(22deg)}}
+.cat-ear-l{transform-origin:68px 48px;animation:eartwitch 4s ease-in-out infinite}
+.cat-ear-r{transform-origin:152px 48px;animation:eartwitch 4s ease-in-out infinite .7s}
+@keyframes eartwitch{0%,85%,100%{transform:rotate(0)}92%{transform:rotate(-10deg)}}
+.cat-eye-l{transform-origin:82px 108px;animation:blinkeye 5s ease-in-out infinite}
+.cat-eye-r{transform-origin:138px 108px;animation:blinkeye 5s ease-in-out infinite .4s}
+@keyframes blinkeye{0%,44%,56%,100%{transform:scaleY(1)}50%{transform:scaleY(0.05)}}
 .cat-mouth{animation:mouthcat 4s ease-in-out infinite}
-@keyframes mouthcat{0%,100%{d:path('M75 110 Q80 114 85 110')}50%{d:path('M75 111 Q80 116 85 111')}}
+@keyframes mouthcat{0%,100%{d:path('M101 133 Q110 138 119 133')}50%{d:path('M101 134 Q110 140 119 134')}}
 .cat-mouth-speaking{animation:mouthspeak 0.12s ease-in-out infinite!important}
-@keyframes mouthspeak{0%,100%{d:path('M72 108 Q80 118 88 108')}50%{d:path('M72 105 Q80 126 88 105')}}50%{d:path('M75 112 Q80 118 85 112')}}
+@keyframes mouthspeak{0%,100%{d:path('M97 131 Q110 144 123 131')}50%{d:path('M97 127 Q110 150 123 127')}}
 
 /* SCORE CARD */
 .score-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:1.5rem}
@@ -236,8 +236,13 @@ canvas#detection-canvas{position:absolute;inset:0;width:100%;height:100%;pointer
           <button class="mic-btn" id="mic-btn" onclick="toggleMic()">🎤</button>
           <div style="font-size:.78rem;color:var(--muted);margin-bottom:.5rem" id="mic-label">Click mic to speak</div>
         </div>
-        <div class="transcript" id="transcript">Your answer will appear here as you speak...</div>
-        <div style="display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap">
+        <div style="position:relative">
+          <textarea id="transcript" rows="4" placeholder="Your answer will appear here as you speak..." style="width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:.75rem;font-size:.84rem;line-height:1.6;color:var(--text);font-family:'Inter',sans-serif;resize:vertical;outline:none;transition:border .2s" oninput="transcript=this.value" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+          <div style="font-size:.7rem;color:var(--muted);margin-top:.3rem;display:flex;align-items:center;gap:4px">
+            <span style="opacity:.7">✏️</span> Speech auto-fills below — tap to correct names, terms, or mistakes before submitting
+          </div>
+        </div>
+        <div style="display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-top:.6rem">
           <button class="btn teal" onclick="submitAnswer()">✅ Submit</button>
           <button class="btn" onclick="skipQ()">⏭ Skip</button>
         </div>
@@ -250,6 +255,11 @@ canvas#detection-canvas{position:absolute;inset:0;width:100%;height:100%;pointer
           <div class="fb-text" id="fb-text"></div>
         </div>
         <div id="fb-placeholder" style="font-size:.83rem;color:var(--muted)">Submit your answer to get instant AI feedback.</div>
+        <!-- Ideal Answer -->
+        <div id="ideal-box" style="display:none;margin-top:.85rem;background:rgba(0,212,170,.05);border:1px solid rgba(0,212,170,.2);border-radius:10px;padding:.9rem">
+          <div style="font-size:.72rem;font-weight:700;color:var(--accent3);letter-spacing:.06em;margin-bottom:.5rem;display:flex;align-items:center;gap:5px">⭐ IDEAL ANSWER</div>
+          <div id="ideal-text" style="font-size:.8rem;line-height:1.75;color:var(--text);opacity:.9"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -269,96 +279,113 @@ canvas#detection-canvas{position:absolute;inset:0;width:100%;height:100%;pointer
     <div class="cat-container">
       <div class="cat-bubble" id="cat-bubble">Analyzing your interview... 🐾</div>
 
-      <!-- TOM CAT SVG -->
-      <svg class="cat-svg" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
+      <!-- KAWAII GREY TABBY CAT SVG -->
+      <svg class="cat-svg" viewBox="0 0 220 240" xmlns="http://www.w3.org/2000/svg">
         <!-- Shadow -->
-        <ellipse cx="100" cy="210" rx="55" ry="8" fill="#555" opacity=".2"/>
+        <ellipse cx="110" cy="232" rx="58" ry="7" fill="#333" opacity=".18"/>
 
-        <!-- Tail -->
+        <!-- Tail (behind body, wags) -->
         <g class="cat-tail">
-          <path d="M100 185 Q65 200 55 182 Q45 164 62 157 Q75 152 82 168 Q90 180 100 185Z" fill="#888" opacity=".9"/>
-          <!-- tail tip -->
-          <ellipse cx="58" cy="168" rx="10" ry="7" fill="#ddd" transform="rotate(-30,58,168)"/>
+          <!-- tail base to curled tip -->
+          <path d="M148 200 Q185 190 192 170 Q198 152 182 148 Q168 145 164 162 Q160 175 170 180 Q178 184 175 192 Q172 200 160 202Z" fill="#b0b8c8" stroke="#222" stroke-width="1.5" stroke-linejoin="round"/>
+          <!-- teal stripes on tail -->
+          <path d="M163 198 Q175 194 178 184" fill="none" stroke="#5cc8b8" stroke-width="4" stroke-linecap="round" opacity=".85"/>
+          <path d="M174 176 Q182 168 180 157" fill="none" stroke="#5cc8b8" stroke-width="4" stroke-linecap="round" opacity=".85"/>
+          <!-- white tail tip -->
+          <ellipse cx="178" cy="149" rx="10" ry="8" fill="white" stroke="#222" stroke-width="1.2" transform="rotate(-20,178,149)"/>
         </g>
 
-        <!-- Body -->
+        <!-- Body group (bobs up/down) -->
         <g class="cat-body">
-          <!-- Main body -->
-          <ellipse cx="100" cy="168" rx="52" ry="44" fill="#888"/>
-          <!-- Belly white -->
-          <ellipse cx="100" cy="172" rx="30" ry="30" fill="#ddd"/>
-          <!-- Body stripes -->
-          <path d="M76 148 Q100 142 124 148" fill="none" stroke="#666" stroke-width="2.5" opacity=".5"/>
-          <path d="M72 160 Q100 153 128 160" fill="none" stroke="#666" stroke-width="2.5" opacity=".5"/>
 
-          <!-- Neck -->
-          <rect x="82" y="118" width="36" height="24" rx="8" fill="#888"/>
+          <!-- BODY -->
+          <ellipse cx="110" cy="188" rx="54" ry="46" fill="#b0b8c8" stroke="#222" stroke-width="1.8"/>
+          <!-- white belly -->
+          <ellipse cx="110" cy="196" rx="32" ry="34" fill="white" opacity=".9"/>
+          <!-- teal body stripes -->
+          <path d="M80 162 Q110 155 140 162" fill="none" stroke="#5cc8b8" stroke-width="5" stroke-linecap="round" opacity=".8"/>
+          <path d="M76 176 Q110 169 144 176" fill="none" stroke="#5cc8b8" stroke-width="5" stroke-linecap="round" opacity=".7"/>
 
-          <!-- Head -->
-          <circle cx="100" cy="98" r="52" fill="#888"/>
+          <!-- NECK -->
+          <rect x="90" y="140" width="40" height="22" rx="10" fill="#b0b8c8" stroke="#222" stroke-width="1.5"/>
 
-          <!-- Head stripes -->
-          <path d="M82 52 Q100 46 118 52" fill="none" stroke="#666" stroke-width="2" opacity=".55"/>
-          <path d="M78 64 Q100 57 122 64" fill="none" stroke="#666" stroke-width="2" opacity=".55"/>
-          <path d="M74 76 Q100 68 126 76" fill="none" stroke="#666" stroke-width="2" opacity=".55"/>
+          <!-- HEAD -->
+          <ellipse cx="110" cy="105" rx="58" ry="54" fill="#b0b8c8" stroke="#222" stroke-width="2"/>
 
-          <!-- Left ear -->
+          <!-- white face diamond -->
+          <ellipse cx="110" cy="115" rx="38" ry="32" fill="white" opacity=".92"/>
+
+          <!-- teal forehead stripes -->
+          <path d="M95 62 Q110 55 125 62" fill="none" stroke="#5cc8b8" stroke-width="4.5" stroke-linecap="round" opacity=".9"/>
+          <path d="M100 73 Q110 67 120 73" fill="none" stroke="#5cc8b8" stroke-width="3.5" stroke-linecap="round" opacity=".85"/>
+          <path d="M104 82 Q110 77 116 82" fill="none" stroke="#5cc8b8" stroke-width="2.5" stroke-linecap="round" opacity=".75"/>
+
+          <!-- LEFT EAR -->
           <g class="cat-ear-l">
-            <polygon points="66,62 50,24 86,56" fill="#888"/>
-            <polygon points="68,60 55,30 84,56" fill="#cc8899"/>
-            <line x1="62" y1="56" x2="68" y2="32" stroke="#aaa" stroke-width="1" opacity=".4"/>
+            <polygon points="68,78 48,30 96,68" fill="#b0b8c8" stroke="#222" stroke-width="1.8" stroke-linejoin="round"/>
+            <!-- pink inner -->
+            <polygon points="70,72 55,38 90,66" fill="#f0a0b8"/>
           </g>
 
-          <!-- Right ear -->
+          <!-- RIGHT EAR -->
           <g class="cat-ear-r">
-            <polygon points="134,62 150,24 114,56" fill="#888"/>
-            <polygon points="132,60 145,30 116,56" fill="#cc8899"/>
-            <line x1="138" y1="56" x2="132" y2="32" stroke="#aaa" stroke-width="1" opacity=".4"/>
+            <polygon points="152,78 172,30 124,68" fill="#b0b8c8" stroke="#222" stroke-width="1.8" stroke-linejoin="round"/>
+            <polygon points="150,72 165,38 130,66" fill="#f0a0b8"/>
           </g>
 
-          <!-- Face white muzzle -->
-          <ellipse cx="100" cy="108" rx="38" ry="32" fill="#ddd"/>
+          <!-- eyebrow marks (subtle) -->
+          <path d="M76 88 Q82 84 90 86" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round"/>
+          <path d="M130 86 Q138 84 144 88" fill="none" stroke="#555" stroke-width="2" stroke-linecap="round"/>
 
-          <!-- Left eye -->
+          <!-- LEFT EYE -->
           <g class="cat-eye-l">
-            <ellipse cx="84" cy="90" rx="11" ry="10" fill="#1a2a10"/>
-            <ellipse cx="84" cy="90" rx="7" ry="8" fill="#4a7a20"/>
-            <ellipse cx="84" cy="90" rx="3" ry="6" fill="#0a0a0a"/>
-            <circle cx="88" cy="86" r="3" fill="white"/>
+            <!-- white sclera -->
+            <ellipse cx="87" cy="108" rx="16" ry="15" fill="white" stroke="#222" stroke-width="1.5"/>
+            <!-- amber iris -->
+            <ellipse cx="87" cy="108" rx="11" ry="12" fill="#c87820"/>
+            <!-- pupil -->
+            <ellipse cx="87" cy="108" rx="5" ry="9" fill="#111"/>
+            <!-- shine -->
+            <circle cx="92" cy="103" r="4" fill="white"/>
+            <circle cx="83" cy="112" r="2" fill="white" opacity=".6"/>
           </g>
 
-          <!-- Right eye -->
+          <!-- RIGHT EYE -->
           <g class="cat-eye-r">
-            <ellipse cx="116" cy="90" rx="11" ry="10" fill="#1a2a10"/>
-            <ellipse cx="116" cy="90" rx="7" ry="8" fill="#4a7a20"/>
-            <ellipse cx="116" cy="90" rx="3" ry="6" fill="#0a0a0a"/>
-            <circle cx="120" cy="86" r="3" fill="white"/>
+            <ellipse cx="133" cy="108" rx="16" ry="15" fill="white" stroke="#222" stroke-width="1.5"/>
+            <ellipse cx="133" cy="108" rx="11" ry="12" fill="#c87820"/>
+            <ellipse cx="133" cy="108" rx="5" ry="9" fill="#111"/>
+            <circle cx="138" cy="103" r="4" fill="white"/>
+            <circle cx="129" cy="112" r="2" fill="white" opacity=".6"/>
           </g>
 
-          <!-- Nose -->
-          <polygon points="100,118 95,124 105,124" fill="#cc6677"/>
+          <!-- NOSE — small pink heart shape -->
+          <ellipse cx="110" cy="128" rx="6" ry="5" fill="#c05878" stroke="#222" stroke-width="1"/>
 
-          <!-- Tom smirk mouth -->
-          <path id="cat-mouth" d="M88 128 Q100 138 112 128" fill="none" stroke="#aa4455" stroke-width="2" stroke-linecap="round" class="cat-mouth"/>
+          <!-- MOUTH -->
+          <path id="cat-mouth" class="cat-mouth" d="M101 133 Q110 138 119 133" fill="none" stroke="#884458" stroke-width="2" stroke-linecap="round"/>
 
-          <!-- Thick Tom whiskers - 3 each side -->
-          <line x1="58" y1="118" x2="91" y2="121" stroke="white" stroke-width="1.5" opacity=".9"/>
-          <line x1="55" y1="124" x2="91" y2="124" stroke="white" stroke-width="1.5" opacity=".9"/>
-          <line x1="58" y1="130" x2="91" y2="127" stroke="white" stroke-width="1.5" opacity=".9"/>
-          <line x1="109" y1="121" x2="142" y2="118" stroke="white" stroke-width="1.5" opacity=".9"/>
-          <line x1="109" y1="124" x2="145" y2="124" stroke="white" stroke-width="1.5" opacity=".9"/>
-          <line x1="109" y1="127" x2="142" y2="130" stroke="white" stroke-width="1.5" opacity=".9"/>
+          <!-- Whiskers -->
+          <line x1="52" y1="122" x2="98" y2="126" stroke="#ccc" stroke-width="1.4" opacity=".9"/>
+          <line x1="50" y1="129" x2="98" y2="129" stroke="#ccc" stroke-width="1.4" opacity=".9"/>
+          <line x1="52" y1="136" x2="98" y2="132" stroke="#ccc" stroke-width="1.4" opacity=".9"/>
+          <line x1="122" y1="126" x2="168" y2="122" stroke="#ccc" stroke-width="1.4" opacity=".9"/>
+          <line x1="122" y1="129" x2="170" y2="129" stroke="#ccc" stroke-width="1.4" opacity=".9"/>
+          <line x1="122" y1="132" x2="168" y2="136" stroke="#ccc" stroke-width="1.4" opacity=".9"/>
 
-          <!-- Paws -->
-          <ellipse cx="70" cy="206" rx="18" ry="11" fill="#888"/>
-          <ellipse cx="130" cy="206" rx="18" ry="11" fill="#888"/>
-          <!-- Toe beans -->
-          <circle cx="62" cy="210" r="3.5" fill="#cc8899" opacity=".6"/>
-          <circle cx="70" cy="213" r="3.5" fill="#cc8899" opacity=".6"/>
-          <circle cx="78" cy="210" r="3.5" fill="#cc8899" opacity=".6"/>
-          <circle cx="122" cy="210" r="3.5" fill="#cc8899" opacity=".6"/>
-          <circle cx="130" cy="213" r="3.5" fill="#cc8899" opacity=".6"/>
-          <circle cx="138" cy="210" r="3.5" fill="#cc8899" opacity=".6"/>
+          <!-- FRONT PAWS -->
+          <ellipse cx="82" cy="224" rx="22" ry="13" fill="#b0b8c8" stroke="#222" stroke-width="1.5"/>
+          <ellipse cx="138" cy="224" rx="22" ry="13" fill="#b0b8c8" stroke="#222" stroke-width="1.5"/>
+          <!-- white paw tops -->
+          <ellipse cx="82" cy="221" rx="16" ry="9" fill="white" opacity=".8"/>
+          <ellipse cx="138" cy="221" rx="16" ry="9" fill="white" opacity=".8"/>
+          <!-- toe beans -->
+          <circle cx="74" cy="228" r="3.5" fill="#d4a0b4" opacity=".7"/>
+          <circle cx="82" cy="230" r="3.5" fill="#d4a0b4" opacity=".7"/>
+          <circle cx="90" cy="228" r="3.5" fill="#d4a0b4" opacity=".7"/>
+          <circle cx="130" cy="228" r="3.5" fill="#d4a0b4" opacity=".7"/>
+          <circle cx="138" cy="230" r="3.5" fill="#d4a0b4" opacity=".7"/>
+          <circle cx="146" cy="228" r="3.5" fill="#d4a0b4" opacity=".7"/>
         </g>
       </svg>
 
@@ -468,13 +495,32 @@ const QS = {
 let apiKey='', questions=[], qIdx=0, timerInt=null, timeLeft=120;
 let isListening=false, recognition=null, transcript='';
 let results=[], stream=null, postureInt=null;
-let cheatLog=[], cheatCount=0;
+let cheatLog=[], cheatCount=0, cheatCooldown={};
 let postureWarnings=0, eyeWarnings=0, lightWarnings=0, goodFrames=0, totalFrames=0;
+let interviewActive=false; // master guard — blocks all warnings after interview ends
 
 // ===== LOAD KEY =====
 window.onload=()=>{
   const k=localStorage.getItem('or_key');
   if(k) document.getElementById('api-key').value=k;
+
+  // Tab/window cheat detection — registered once, gated by interviewActive
+  document.addEventListener('visibilitychange',()=>{
+    if(!interviewActive) return;
+    if(document.hidden) triggerCheat('Switched tab or minimised window','🪟', 'tab');
+  });
+  window.addEventListener('blur',()=>{
+    if(!interviewActive) return;
+    triggerCheat('Left the interview window','🖥️', 'blur');
+  });
+  document.addEventListener('copy',()=>{
+    if(!interviewActive) return;
+    triggerCheat('Copied text during interview','📋', 'copy');
+  });
+  document.addEventListener('paste',()=>{
+    if(!interviewActive) return;
+    triggerCheat('Pasted text during interview','📋', 'paste');
+  });
 };
 
 // ===== START =====
@@ -488,6 +534,10 @@ async function startInterview(){
   timeLeft=parseInt(document.getElementById('time-limit').value);
   questions=shuffle(QS[type]||QS.general).slice(0,num);
 
+  // Reset all state
+  qIdx=0; results=[]; cheatLog=[]; cheatCount=0; cheatCooldown={};
+  postureWarnings=0; eyeWarnings=0; lightWarnings=0; goodFrames=0; totalFrames=0;
+
   try{
     stream=await navigator.mediaDevices.getUserMedia({video:true,audio:true});
     document.getElementById('video').srcObject=stream;
@@ -498,18 +548,18 @@ async function startInterview(){
   document.getElementById('interview-screen').style.display='block';
 
   setupSpeech();
-  startPostureCheck(); // async AI face detection
-  qIdx=0; results=[]; cheatLog=[]; cheatCount=0;
-  postureWarnings=0; eyeWarnings=0; lightWarnings=0; goodFrames=0; totalFrames=0;
+  startPostureCheck();
+  interviewActive=true; // enable cheat detection AFTER setup is done
   loadQ();
 }
 
-// ===== POSTURE & CHEAT DETECTION (AI-powered BlazeFace) =====
+// ===== POSTURE & CHEAT DETECTION =====
 let faceDetector=null;
-let noFaceCount=0; // consecutive frames with no face
-let extraPersonCount=0; // consecutive frames with extra face
-const NO_FACE_THRESHOLD=2; // need 4 consecutive misses before warning (less sensitive)
+let noFaceCount=0;
+let extraPersonCount=0;
+const NO_FACE_THRESHOLD=4;   // 4 consecutive frames (~10s) before warning
 const EXTRA_PERSON_THRESHOLD=3;
+const CHEAT_COOLDOWN_MS=15000; // same cheat type can only fire once per 15s
 
 async function startPostureCheck(){
   try{
@@ -517,20 +567,18 @@ async function startPostureCheck(){
     await tf.ready();
     faceDetector=await blazeface.load();
     showToast('✅ Face detection ready!');
-    console.log('BlazeFace loaded successfully');
   }catch(e){
-    console.log('BlazeFace failed:',e.message);
     faceDetector=null;
     showToast('⚠️ Camera analysis in basic mode');
   }
-  // Check every 2.5 seconds
-  postureInt=setInterval(()=>checkFrame(),2500);
+  postureInt=setInterval(()=>{ if(interviewActive) checkFrame(); },2500);
 }
 
 async function checkFrame(){
+  if(!interviewActive) return; // hard guard inside async callback too
   const video=document.getElementById('video');
   const canvas=document.getElementById('detection-canvas');
-  if(!video||video.readyState<2)return;
+  if(!video||video.readyState<2) return;
 
   const ctx=canvas.getContext('2d');
   canvas.width=video.videoWidth||640;
@@ -538,137 +586,102 @@ async function checkFrame(){
   ctx.drawImage(video,0,0,canvas.width,canvas.height);
   totalFrames++;
 
-  // Brightness check (lighting)
+  // Brightness / lighting check
   const imgData=ctx.getImageData(0,0,canvas.width,canvas.height).data;
   let bright=0;
   for(let i=0;i<imgData.length;i+=20) bright+=(imgData[i]+imgData[i+1]+imgData[i+2])/3;
   bright/=(imgData.length/20);
-  const lightOk=bright>55;
-  const lightDim=bright>25&&bright<=55;
-  setChip('chip-light',lightOk?'good':lightDim?'warn':'bad',lightOk?'💡 Lighting OK':lightDim?'💡 Dim lighting':'💡 Too dark!');
+  const lightOk=bright>55, lightDim=bright>25&&bright<=55;
+  setChip('chip-light',lightOk?'good':lightDim?'warn':'bad',
+    lightOk?'💡 Lighting OK':lightDim?'💡 Dim lighting':'💡 Too dark!');
   if(!lightOk) lightWarnings++;
 
-  // AI Face Detection with BlazeFace
   if(faceDetector){
     try{
       const predictions=await faceDetector.estimateFaces(video,false);
+      if(!interviewActive) return; // check again after await — interview may have ended
       const faceCount=predictions.length;
 
       if(faceCount===0){
-        // No face detected
-        noFaceCount++;
         extraPersonCount=0;
-        if(noFaceCount>=NO_FACE_THRESHOLD){
-          // Only warn after 4 consecutive misses (real absence, not a glitch)
-          setChip('chip-face','bad','👤 Face not visible!');
-          if(noFaceCount===NO_FACE_THRESHOLD) triggerCheat('You left the camera frame!','👤');
-        } else {
-          // Still within threshold — show warning but don't log cheat
+        noFaceCount++;
+        if(noFaceCount<NO_FACE_THRESHOLD){
           setChip('chip-face','warn','👤 Stay in frame...');
+        } else {
+          setChip('chip-face','bad','👤 Face not visible!');
+          if(noFaceCount===NO_FACE_THRESHOLD) triggerCheat('You left the camera frame','👤','no_face');
         }
       } else if(faceCount===1){
-        // Exactly one face — perfect!
-        noFaceCount=0;
-        extraPersonCount=0;
+        noFaceCount=0; extraPersonCount=0;
         setChip('chip-face','good','👤 Face detected ✓');
         goodFrames++;
 
-        // Accurate face position analysis
         const face=predictions[0];
+        const topLeft=face.topLeft, bottomRight=face.bottomRight;
+        const faceW=bottomRight[0]-topLeft[0], faceH=bottomRight[1]-topLeft[1];
+        const faceCX=(topLeft[0]+faceW/2)/canvas.width;
+        const faceCY=(topLeft[1]+faceH/2)/canvas.height;
+        const hOk=faceCX>0.15&&faceCX<0.85, vOk=faceCY>0.08&&faceCY<0.72;
 
-        // Get face bounding box
-        const topLeft=face.topLeft;
-        const bottomRight=face.bottomRight;
-        const faceW=bottomRight[0]-topLeft[0];
-        const faceH=bottomRight[1]-topLeft[1];
-        const faceCenterX=(topLeft[0]+faceW/2)/canvas.width;
-        const faceCenterY=(topLeft[1]+faceH/2)/canvas.height;
-
-        // Eye contact: face should be centered horizontally and in upper half
-        const horizontalOk=faceCenterX>0.2&&faceCenterX<0.8;
-        const verticalOk=faceCenterY>0.1&&faceCenterY<0.7;
-        const lookingAtCamera=horizontalOk&&verticalOk;
-
-        if(lookingAtCamera){
+        if(hOk&&vOk){
           setChip('chip-eye','good','👀 Eye contact ✓');
-        } else if(!horizontalOk){
-          setChip('chip-eye','warn','👀 Center your face!');
-          eyeWarnings++;
         } else {
-          setChip('chip-eye','warn','👀 Look at camera!');
+          setChip('chip-eye','warn', !hOk?'👀 Center your face!':'👀 Look at camera!');
           eyeWarnings++;
         }
 
-        // Posture: check face size (too small = too far, leaning back)
         const faceArea=(faceW*faceH)/(canvas.width*canvas.height);
-        const tooFar=faceArea<0.03;
-        const tooClose=faceArea>0.35;
-        const goodPosture=!tooFar&&!tooClose;
-
-        if(tooFar){
-          setChip('chip-posture','warn','🪑 Sit closer to camera!');
+        if(faceArea<0.03){
+          setChip('chip-posture','warn','🪑 Sit closer!');
           postureWarnings++;
-        } else if(tooClose){
-          setChip('chip-posture','warn','🪑 Sit a bit further back!');
+        } else if(faceArea>0.35){
+          setChip('chip-posture','warn','🪑 Sit back a bit!');
           postureWarnings++;
         } else {
           setChip('chip-posture','good','🪑 Posture ✓');
         }
 
-
-
-      } else if(faceCount>=2){
-        // Multiple faces detected!
+      } else {
         noFaceCount=0;
         extraPersonCount++;
-        setChip('chip-face','bad','👤 Multiple faces!');
-        if(extraPersonCount>=EXTRA_PERSON_THRESHOLD){
-          if(extraPersonCount===EXTRA_PERSON_THRESHOLD) triggerCheat('Another person detected in frame!','🚨');
-        }
+        setChip('chip-face','bad','👤 Multiple people!');
+        if(extraPersonCount===EXTRA_PERSON_THRESHOLD)
+          triggerCheat('Another person detected in frame','🚨','extra_person');
       }
-    }catch(e){
-      // AI detection failed this frame — skip silently
-      console.log('Detection frame error:',e.message);
-    }
+    }catch(e){ /* skip frame */ }
   } else {
-    // Fallback: simple brightness-based detection (less accurate)
-    const faceArea=ctx.getImageData(Math.floor(canvas.width*0.25),Math.floor(canvas.height*0.05),
-      Math.floor(canvas.width*0.5),Math.floor(canvas.height*0.5)).data;
-    let skinPx=0,total=0;
-    for(let i=0;i<faceArea.length;i+=16){
-      const r=faceArea[i],g=faceArea[i+1],b=faceArea[i+2];
+    // Fallback skin-tone heuristic
+    const sample=ctx.getImageData(Math.floor(canvas.width*.25),Math.floor(canvas.height*.05),
+      Math.floor(canvas.width*.5),Math.floor(canvas.height*.5)).data;
+    let skinPx=0,tot=0;
+    for(let i=0;i<sample.length;i+=16){
+      const r=sample[i],g=sample[i+1],b=sample[i+2];
       if(r>80&&g>50&&b>30&&r>g&&r>b&&(r-Math.min(g,b))>15) skinPx++;
-      total++;
+      tot++;
     }
-    const skinRatio=skinPx/total;
-    const facePresent=skinRatio>0.12; // Higher threshold = less sensitive
-    setChip('chip-face',facePresent?'good':'warn',facePresent?'👤 Face OK':'👤 Stay in frame');
-    if(!facePresent){
-      noFaceCount++;
-      if(noFaceCount>=NO_FACE_THRESHOLD) triggerCheat('You left the camera frame!','👤');
-    } else {
-      noFaceCount=0;
-      goodFrames++;
-    }
-    // Basic posture & eye simulation
-    const t=Date.now()/8000;
-    const postureOk=Math.sin(t)>-0.3;
-    const eyeOk=Math.cos(t*1.2)>-0.25;
-    setChip('chip-posture','bad','🪑 No camera — posture unknown');
-    setChip('chip-eye','bad','👀 No camera — eye contact unknown');
-    postureWarnings+=3;
-    eyeWarnings+=3;
+    const present=skinPx/tot>0.12;
+    setChip('chip-face',present?'good':'warn',present?'👤 Face OK':'👤 Stay in frame');
+    if(!present){ noFaceCount++; if(noFaceCount===NO_FACE_THRESHOLD) triggerCheat('You left the camera frame','👤','no_face'); }
+    else{ noFaceCount=0; goodFrames++; }
+    setChip('chip-posture','bad','🪑 No camera — unknown');
+    setChip('chip-eye','bad','👀 No camera — unknown');
+    postureWarnings+=3; eyeWarnings+=3;
   }
 
-  // Update integrity chip
   setChip('chip-alone',cheatCount===0?'good':cheatCount<3?'warn':'bad',
-    cheatCount===0?'🛡️ No cheating detected':'⚠️ '+cheatCount+' warning(s)');
+    cheatCount===0?'🛡️ Integrity OK':'⚠️ '+cheatCount+' warning'+(cheatCount>1?'s':''));
 }
 
-function triggerCheat(msg, icon){
+// triggerCheat with cooldown + active guard
+function triggerCheat(msg, icon, key){
+  if(!interviewActive) return; // never fire after interview ends
+  const now=Date.now();
+  if(key && cheatCooldown[key] && now-cheatCooldown[key]<CHEAT_COOLDOWN_MS) return;
+  if(key) cheatCooldown[key]=now;
+
   cheatCount++;
   const time=new Date().toLocaleTimeString();
-  cheatLog.push({msg, time, icon});
+  cheatLog.push({msg,time,icon});
 
   const alert=document.getElementById('cheat-alert');
   document.getElementById('cheat-msg').textContent=icon+' '+msg;
@@ -680,14 +693,14 @@ function triggerCheat(msg, icon){
 
 function setChip(id,state,text){
   const c=document.getElementById(id);
-  if(!c)return;
+  if(!c) return;
   c.className='chip '+state;
   c.textContent=text;
 }
 
 // ===== SPEECH =====
 function setupSpeech(){
-  if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window))return;
+  if(!('webkitSpeechRecognition' in window)&&!('SpeechRecognition' in window)) return;
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   recognition=new SR();
   recognition.continuous=true;
@@ -700,16 +713,20 @@ function setupSpeech(){
       else int+=e.results[i][0].transcript;
     }
     transcript+=fin;
-    document.getElementById('transcript').textContent=(transcript+int)||'Listening...';
+    const ta=document.getElementById('transcript');
+    ta.value=(transcript+int)||'Listening...';
+    ta.style.borderColor=fin?'var(--accent3)':'var(--border)';
   };
-  recognition.onerror=e=>{if(e.error!=='no-speech')showToast('Mic: '+e.error);stopMic();};
+  recognition.onerror=e=>{if(e.error!=='no-speech') showToast('Mic: '+e.error); stopMic();};
 }
 
 function toggleMic(){isListening?stopMic():startMic();}
 function startMic(){
-  if(!recognition){showToast('Speech not supported — type your answer');return;}
+  if(!recognition){showToast('Speech not supported');return;}
   transcript='';
-  document.getElementById('transcript').textContent='Listening...';
+  const ta=document.getElementById('transcript');
+  ta.value='Listening...';
+  ta.style.borderColor='var(--accent)';
   recognition.start();
   isListening=true;
   document.getElementById('mic-btn').classList.add('on');
@@ -717,7 +734,7 @@ function startMic(){
   document.getElementById('mic-label').textContent='Recording... click to stop';
 }
 function stopMic(){
-  if(recognition) recognition.stop();
+  if(recognition) try{recognition.stop();}catch(e){}
   isListening=false;
   document.getElementById('mic-btn').classList.remove('on');
   document.getElementById('mic-btn').textContent='🎤';
@@ -727,47 +744,39 @@ function stopMic(){
 // ===== QUESTION FLOW =====
 function loadQ(){
   if(qIdx>=questions.length){endInterview();return;}
-  const q=questions[qIdx];
-  const total=questions.length;
+  const q=questions[qIdx], total=questions.length;
   document.getElementById('current-q').textContent=q.q;
   document.getElementById('q-badge').textContent=q.c;
   document.getElementById('q-counter').textContent=`Q${qIdx+1} of ${total}`;
   document.getElementById('prog').style.width=(qIdx/total*100)+'%';
-  document.getElementById('transcript').textContent='Your answer will appear here as you speak...';
+  document.getElementById('transcript').value='';
+  document.getElementById('transcript').style.borderColor='var(--border)';
   document.getElementById('fb-box').classList.remove('show');
   document.getElementById('fb-placeholder').style.display='block';
+  document.getElementById('ideal-box').style.display='none';
+  document.getElementById('ideal-text').textContent='';
   transcript='';
   speakText(q.q);
   resetTimer(); startTimer();
 }
 
 function speakText(t){
-  if(!window.speechSynthesis)return;
+  if(!window.speechSynthesis) return;
   window.speechSynthesis.cancel();
   const u=new SpeechSynthesisUtterance(t);
-  // Load voices - may need a moment to populate
-  let voices=window.speechSynthesis.getVoices();
-  if(!voices.length){
-    window.speechSynthesis.onvoiceschanged=()=>{
-      voices=window.speechSynthesis.getVoices();
-    };
-  }
-  // Pick friendly female voice in priority order
-  const preferredVoice=
-    voices.find(v=>v.name==='Samantha')||
-    voices.find(v=>v.name==='Google UK English Female')||
-    voices.find(v=>v.name==='Karen')||
-    voices.find(v=>v.name==='Moira')||
-    voices.find(v=>v.name.includes('Female')&&v.lang.startsWith('en'))||
-    voices.find(v=>v.lang==='en-IN'&&v.name.includes('female'))||
-    voices.find(v=>v.lang.startsWith('en'));
-  if(preferredVoice) u.voice=preferredVoice;
+  const voices=window.speechSynthesis.getVoices();
+  const v=voices.find(v=>v.name==='Samantha')||
+           voices.find(v=>v.name==='Google UK English Female')||
+           voices.find(v=>v.name==='Karen')||
+           voices.find(v=>v.name.includes('Female')&&v.lang.startsWith('en'))||
+           voices.find(v=>v.lang.startsWith('en'));
+  if(v) u.voice=v;
   u.rate=0.82; u.pitch=1.15; u.volume=1;
   const ind=document.getElementById('speaking-ind');
-  ind.classList.add('show');
   const mouth=document.getElementById('cat-mouth');
+  ind.classList.add('show');
   if(mouth) mouth.classList.add('cat-mouth-speaking');
-  u.onend=()=>{
+  u.onend=u.onerror=()=>{
     ind.classList.remove('show');
     if(mouth) mouth.classList.remove('cat-mouth-speaking');
   };
@@ -781,7 +790,7 @@ function startTimer(){
   timerInt=setInterval(()=>{
     timeLeft--;
     updateTimer();
-    if(timeLeft<=0){clearInterval(timerInt);showToast("Time's up!");submitAnswer();}
+    if(timeLeft<=0){clearInterval(timerInt);showToast("⏰ Time's up!");submitAnswer();}
   },1000);
 }
 function resetTimer(){clearInterval(timerInt);timeLeft=parseInt(document.getElementById('time-limit').value);updateTimer();}
@@ -793,152 +802,246 @@ function updateTimer(){
   el.className='timer '+(timeLeft>total*.5?'green':timeLeft>total*.2?'yellow':'red');
 }
 
+// ===== ANSWER SUBMISSION & AI REVIEW =====
 async function submitAnswer(){
   clearInterval(timerInt);
   stopMic();
   window.speechSynthesis.cancel();
-  const ans=transcript.trim()||'';
-  const q=questions[qIdx];
-  if(!ans){showToast('No answer — skipping');skipQ();return;}
+
+  // Snapshot which question this submission belongs to. If the user skips or
+  // otherwise advances before the AI response comes back, qIdx will have moved
+  // on and we must not let this stale response overwrite the new question's UI.
+  const myIdx=qIdx;
+  const isStale=()=>qIdx!==myIdx;
+
+  // Read from textarea — user may have edited it
+  const ta=document.getElementById('transcript');
+  const ans=(ta.value||transcript).trim();
+  transcript=ans; // keep in sync
+  const q=questions[myIdx];
+  if(!ans){showToast('No answer recorded — skipping');skipQ();return;}
 
   document.getElementById('fb-placeholder').style.display='none';
-  document.getElementById('fb-text').textContent='⏳ Analyzing...';
+  document.getElementById('fb-text').textContent='⏳ Analyzing your answer...';
   document.getElementById('fb-box').classList.add('show');
+  document.getElementById('ideal-box').style.display='none';
 
-  // Check answer quality before scoring
-  const wordCount = ans.trim().split(/\s+/).length;
-  if(wordCount < 8){
-    // Too short - auto low score
-    const shortFb = `SCORE: 2/10\nGOOD: You attempted to answer.\nIMPROVE: Your answer is too short. Give at least 3-4 sentences with specific details.\nTIP: Use the STAR method - Situation, Task, Action, Result.`;
-    document.getElementById('fb-score').textContent='2/10';
-    document.getElementById('fb-score').className='fb-score l';
-    document.getElementById('fb-text').textContent=shortFb.replace(/SCORE:\s*\d+\/10\n?/i,'').trim();
-    results.push({q:q.q,a:ans,fb:shortFb,score:2,cat:q.c});
-    setTimeout(()=>{qIdx++;qIdx<questions.length?loadQ():endInterview();},3500);
+  const wordCount=ans.trim().split(/\s+/).length;
+
+  // Very short answer — skip AI
+  if(wordCount<8){
+    if(!isStale()){
+      renderFeedback({
+        score:2,
+        good:'You attempted to respond.',
+        improve:'Your answer was too brief. Aim for at least 3–4 sentences with specific examples.',
+        tip:'Use the STAR method: Situation → Task → Action → Result.'
+      });
+      showIdealAnswer(q.q,myIdx);
+    }
+    results.push({q:q.q,a:ans,score:2,cat:q.c,feedback:{good:'Too brief',improve:'Add detail',tip:'Use STAR method'}});
+    setTimeout(()=>{if(!isStale()){qIdx++;qIdx<questions.length?loadQ():endInterview();}},6000);
     return;
   }
 
-  const prompt=`You are a strict and fair interview examiner. Score this answer honestly based on quality.
+  const scorePrompt=`You are a senior interview coach and hiring manager with 15+ years of experience. Evaluate this interview answer rigorously and fairly.
 
-QUESTION: ${q.q}
-ANSWER: ${ans}
-WORD COUNT: ${wordCount} words
+QUESTION: "${q.q}"
+CANDIDATE'S ANSWER: "${ans}"
+WORD COUNT: ${wordCount}
 
-STRICT SCORING CRITERIA:
-- 1-2: Completely irrelevant or offensive answer
-- 3-4: Too vague, very short, no specific examples, under 20 words
-- 5-6: Some relevant points but lacks structure, detail or examples
-- 7-8: Good answer with clear structure and some specific examples
-- 9-10: Excellent - specific examples, STAR structure, confident and complete
+SCORING RUBRIC (be strict and calibrated):
+1–2: Completely off-topic, offensive, or nonsensical
+3–4: Very vague, no structure, no examples, under 20 words of substance
+5–6: Partially relevant, some structure but lacks specifics or depth
+7–8: Clear, structured answer with relevant examples, good communication
+9–10: Exceptional — specific STAR-structured examples, confident, complete, insightful
 
-IMPORTANT: Be strict. A one-sentence answer should never get above 4. A rambling irrelevant answer should get 2-3.
+RULES:
+- A one-sentence answer scores max 4, no matter the content
+- Rambling without a clear point scores max 5
+- Score must reflect real interview standards, not encouragement
+- Be concise but specific in your feedback
 
-Reply in EXACTLY this format only:
-SCORE: X/10
-GOOD: [specific strength of this answer]
-IMPROVE: [specific thing to do better]
-TIP: [one actionable improvement tip]`;
+Reply in EXACTLY this JSON format and nothing else:
+{"score":7,"good":"Specific strength of this answer","improve":"One concrete thing to improve","tip":"One actionable technique to use next time"}`;
 
+  // Fire scoring and ideal answer in parallel
+  let score, feedback;
   try{
-    const fb=await callAI(prompt);
-    const sm=fb.match(/SCORE:\s*(\d+)/i);
-    const score=sm?parseInt(sm[1]):5;
-    const el=document.getElementById('fb-score');
-    el.textContent=score+'/10';
-    el.className='fb-score '+(score>=8?'g':score>=6?'m':'l');
-    // Format feedback nicely
-    let fbClean=fb.replace(/SCORE:\s*\d+\/10\n?/i,'').trim();
-    fbClean=fbClean.replace('GOOD:','✅').replace('IMPROVE:','\n📈').replace('TIP:','\n💡');
-    document.getElementById('fb-text').textContent=fbClean;
-    results.push({q:q.q,a:ans,fb,score,cat:q.c});
+    const [raw] = await Promise.all([
+      callAI(scorePrompt),
+      showIdealAnswer(q.q,myIdx)   // starts loading ideal answer immediately
+    ]);
+    const clean=raw.replace(/```json|```/gi,'').trim();
+    const parsed=JSON.parse(clean);
+    score=Math.min(10,Math.max(1,parseInt(parsed.score)||5));
+    feedback={
+      good:parsed.good||'You answered the question.',
+      improve:parsed.improve||'Add more specific examples.',
+      tip:parsed.tip||'Practice the STAR method.'
+    };
   }catch(e){
-    results.push({q:q.q,a:ans,fb:'N/A',score:0,cat:q.c});
+    score=wordCount>80?6:wordCount>40?5:3;
+    feedback={
+      good:'You provided a response to the question.',
+      improve:'Add specific examples and structure your answer more clearly.',
+      tip:'Try the STAR method: Situation, Task, Action, Result.'
+    };
   }
 
-  setTimeout(()=>{qIdx++;qIdx<questions.length?loadQ():endInterview();},3500);
+  results.push({q:q.q,a:ans,score,cat:q.c,feedback});
+  if(!isStale()) renderFeedback({score,...feedback});
+
+  setTimeout(()=>{if(!isStale()){qIdx++;qIdx<questions.length?loadQ():endInterview();}},6000);
+}
+
+function renderFeedback({score,good,improve,tip}){
+  const el=document.getElementById('fb-score');
+  el.textContent=score+'/10';
+  el.className='fb-score '+(score>=8?'g':score>=6?'m':'l');
+  document.getElementById('fb-text').innerHTML=
+    `<span style="color:var(--accent3)">✅ Strength:</span> ${good}\n\n`+
+    `<span style="color:#fa0">📈 Improve:</span> ${improve}\n\n`+
+    `<span style="color:var(--accent)">💡 Tip:</span> ${tip}`;
+}
+
+async function showIdealAnswer(question,myIdx){
+  const idealBox=document.getElementById('ideal-box');
+  const idealText=document.getElementById('ideal-text');
+  idealBox.style.display='block';
+  idealText.textContent='Generating ideal answer...';
+  idealText.style.opacity='.5';
+
+  const prompt=`You are a top interview coach. Write a concise model answer (90–130 words) for this interview question that a strong candidate would give. Use clear structure — briefly state the main point, give a specific example using STAR if applicable, and close with impact or learning. Write in first person, natural spoken English, no bullet points.
+
+QUESTION: "${question}"
+
+Reply with ONLY the model answer text, nothing else.`;
+
+  try{
+    const ideal=await callAI(prompt);
+    if(myIdx!==undefined && qIdx!==myIdx) return; // question moved on — discard stale result
+    idealText.textContent=ideal.trim();
+    idealText.style.opacity='1';
+  }catch(e){
+    if(myIdx!==undefined && qIdx!==myIdx) return;
+    idealText.textContent='Ideal answer unavailable — check your API key and try again.';
+    idealText.style.opacity='.5';
+  }
 }
 
 function skipQ(){
   clearInterval(timerInt);stopMic();window.speechSynthesis.cancel();
-  results.push({q:questions[qIdx].q,a:'[Skipped]',fb:'N/A',score:0,cat:questions[qIdx].c});
+  results.push({q:questions[qIdx].q,a:'[Skipped]',score:0,cat:questions[qIdx].c,feedback:null});
+  document.getElementById('ideal-box').style.display='none';
   qIdx++;
   qIdx<questions.length?loadQ():endInterview();
 }
 
-// ===== END =====
+// ===== END INTERVIEW =====
 async function endInterview(){
+  // STOP everything immediately — this is the most important line
+  interviewActive=false;
+
   clearInterval(timerInt);
   clearInterval(postureInt);
+  timerInt=null; postureInt=null;
+
   stopMic();
   window.speechSynthesis.cancel();
-  timerInt=null;
-  postureInt=null;
-  qIdx=questions.length;
-  if(recognition){ try{recognition.stop();}catch(e){} }
+  if(recognition) try{recognition.stop();}catch(e){}
   if(stream) stream.getTracks().forEach(t=>t.stop());
+
+  // Hide any lingering cheat alert
+  const alert=document.getElementById('cheat-alert');
+  alert.classList.remove('show');
+
+  qIdx=questions.length; // prevent any late callbacks from re-triggering
 
   document.getElementById('interview-screen').style.display='none';
   document.getElementById('results-screen').style.display='block';
-  window.speechSynthesis.cancel(); // stop any lingering speech
 
-  // Calculate scores
+  // ===== SCORE CALCULATIONS =====
   const ansScores=results.map(r=>r.score);
   const ansAvg=ansScores.length?Math.round(ansScores.reduce((a,b)=>a+b,0)/ansScores.length):0;
 
-  const eyeScore=totalFrames?Math.max(1,Math.round(10-(eyeWarnings/totalFrames)*20)):3;
-  const postureScore=totalFrames?Math.max(1,Math.round(10-(postureWarnings/totalFrames)*20)):3;
-  const lightScore=totalFrames?Math.max(1,Math.round(10-(lightWarnings/totalFrames)*12)):9;
-  const integrityScore=Math.max(1,10-cheatCount*2);
-  const overall=ansAvg===0?0:Math.min(10,Math.round((ansAvg*3+eyeScore+postureScore+integrityScore)/5));
+  // Clamp all scores 1–10
+  const eyeScore   = totalFrames ? Math.min(10,Math.max(1,Math.round(10-(eyeWarnings/totalFrames)*25)))     : 5;
+  const postureScore=totalFrames ? Math.min(10,Math.max(1,Math.round(10-(postureWarnings/totalFrames)*25))) : 5;
+  const lightScore  = totalFrames ? Math.min(10,Math.max(1,Math.round(10-(lightWarnings/totalFrames)*15)))  : 8;
+  const integrityScore=Math.min(10,Math.max(1,10-cheatCount*2));
 
-  // Animate bars
+  // Weighted overall: answers 50%, eye 15%, posture 15%, integrity 20%
+  const overall = ansAvg===0 ? 0 :
+    Math.min(10,Math.round(ansAvg*0.5 + eyeScore*0.15 + postureScore*0.15 + integrityScore*0.2));
+
+  // Animate score bars
   setTimeout(()=>{
-    setBar('answer',ansAvg); setBar('eye',eyeScore);
-    setBar('posture',postureScore); setBar('light',lightScore);
+    setBar('answer',ansAvg);
+    setBar('eye',eyeScore);
+    setBar('posture',postureScore);
+    setBar('light',lightScore);
     setBar('integrity',integrityScore);
     document.getElementById('overall-num').textContent=overall+'/10';
-  },300);
+  },400);
 
-  // Cheat log
+  // ===== INTEGRITY LOG =====
   if(cheatLog.length>0){
     document.getElementById('cheat-log').style.display='block';
     document.getElementById('cheat-items').innerHTML=cheatLog.map(c=>
-      `<div class="cheat-item">${c.icon} ${c.msg} <span style="margin-left:auto;opacity:.5">${c.time}</span></div>`
+      `<div class="cheat-item">${c.icon} ${c.msg} <span style="margin-left:auto;opacity:.5;font-size:.72rem">${c.time}</span></div>`
     ).join('');
   }
 
-  // Per-question results
-  document.getElementById('q-results').innerHTML='<div style="margin-top:1rem;border-top:1px solid var(--border);padding-top:1rem"><div style="font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:.75rem">ANSWER BREAKDOWN</div>'+
-    results.map((r,i)=>`
-      <div style="padding:.6rem 0;border-bottom:1px solid var(--border)">
-        <div style="font-size:.78rem;color:var(--muted)">Q${i+1}: ${r.q}</div>
-        <div style="font-size:.82rem;margin:.25rem 0;color:var(--text)">"${r.a.substring(0,80)}${r.a.length>80?'...':''}"</div>
-        <div style="font-size:.82rem;font-weight:700;color:${r.score>=8?'var(--accent3)':r.score>=6?'#fa0':'var(--accent2)'}">${r.score}/10</div>
-      </div>`).join('')+'</div>';
+  // ===== PER-QUESTION BREAKDOWN =====
+  document.getElementById('q-results').innerHTML=
+    '<div style="margin-top:1rem;border-top:1px solid var(--border);padding-top:1rem">'+
+    '<div style="font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:.75rem;letter-spacing:.05em">ANSWER BREAKDOWN</div>'+
+    results.map((r,i)=>{
+      const scoreColor=r.score>=8?'var(--accent3)':r.score>=6?'#fa0':'var(--accent2)';
+      const fb=r.feedback;
+      return `<div style="padding:.75rem 0;border-bottom:1px solid var(--border)">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem">
+          <div style="font-size:.78rem;color:var(--muted);font-weight:600">Q${i+1} · ${r.cat}</div>
+          <div style="font-size:.9rem;font-weight:700;color:${scoreColor}">${r.score}/10</div>
+        </div>
+        <div style="font-size:.8rem;color:var(--muted);margin-bottom:.3rem;font-style:italic">"${r.q}"</div>
+        <div style="font-size:.82rem;color:var(--text);margin-bottom:.4rem;opacity:.85">${r.a==='[Skipped]'?'<em style="color:var(--muted)">Skipped</em>':'"'+r.a.substring(0,100)+(r.a.length>100?'...':'') +'"'}</div>
+        ${fb?`<div style="font-size:.78rem;line-height:1.6;color:var(--muted)">
+          <span style="color:var(--accent3)">✅</span> ${fb.good}<br>
+          <span style="color:#fa0">📈</span> ${fb.improve}
+        </div>`:''}
+      </div>`;
+    }).join('')+'</div>';
 
-  // Cat bubble — get AI cat feedback
-  const catPrompt=`You are a friendly and encouraging interview coach. Give warm, honest, supportive feedback like a good mentor. Be specific about strengths and improvements. Sound professional but kind. Do NOT use any cat sounds, animal actions, or phrases like meow, purr, tail wagging, whiskers etc. Just speak as a friendly human coach. Keep it to 4-5 sentences.
+  // ===== CAT COACH AI FEEDBACK =====
+  const performanceLevel = overall>=8?'excellent':overall>=6?'good':overall>=4?'average':'needs improvement';
+  const catPrompt=`You are a professional interview coach reviewing a candidate's mock interview performance. Give honest, warm, actionable feedback in 4–5 sentences. Be specific to the numbers. Do not use any animal references or sound effects.
 
-Stats:
+Performance data:
 - Answer quality: ${ansAvg}/10
-- Eye contact: ${eyeScore}/10  
+- Eye contact: ${eyeScore}/10
 - Posture: ${postureScore}/10
-- Integrity/cheating warnings: ${cheatCount}
-- Overall: ${overall}/10
+- Lighting: ${lightScore}/10
+- Integrity (${cheatCount} warning${cheatCount!==1?'s':''}): ${integrityScore}/10
+- Overall: ${overall}/10 (${performanceLevel})
 
-Give 3-4 sentences of warm, specific, actionable feedback. Mention what was good AND what to improve. Keep it fun and encouraging!`;
+Focus on: what they did well, what to prioritize improving, and one specific technique to use next time. Be encouraging but honest. No fluff.`;
 
   try{
     const catFb=await callAI(catPrompt);
     document.getElementById('cat-bubble').textContent=catFb;
-    const stopBtn=document.getElementById('stop-btn');
-    if(stopBtn) stopBtn.style.display='inline-flex';
+    document.getElementById('stop-btn').style.display='inline-flex';
     speakText(catFb);
   }catch(e){
-    document.getElementById('cat-bubble').textContent=
-      overall>=8?"Purrr! Amazing job! Your answers were confident and well-structured. Keep it up! 🐾":
-      overall>=6?"Meow! Pretty good interview! Work a bit more on eye contact and sitting straight. You're getting there! 😸":
-      "*flicks tail* Keep practicing! Focus on structure in your answers and look at the camera more. You'll get better! 🐱";
+    const fallback=
+      overall>=8?"Great performance overall! Your answers were well-structured and confident. Keep working on maintaining consistent eye contact with the camera. You're genuinely interview-ready — keep practising to stay sharp. 🎉":
+      overall>=6?"Solid effort! Your answers showed real understanding of the topics. To level up, focus on adding specific examples using the STAR method. Eye contact and posture improvements will make you look significantly more confident on screen.":
+      overall>=4?"You've got the foundations — now it's time to build on them. Work on giving longer, more structured answers with real examples from your experience. Practice speaking to a camera daily for 5 minutes and you'll see fast improvement.":
+      "Every great candidate started somewhere — this is your starting point. Focus first on answer structure: use STAR (Situation, Task, Action, Result) for every question. Aim for 60–90 second answers with a concrete example. You'll improve quickly with practice.";
+    document.getElementById('cat-bubble').textContent=fallback;
+    speakText(fallback);
   }
 }
 
@@ -950,18 +1053,24 @@ function setBar(id,score){
 function restartInterview(){
   document.getElementById('results-screen').style.display='none';
   document.getElementById('setup-screen').style.display='block';
-  results=[];cheatLog=[];cheatCount=0;
+  interviewActive=false;
+  results=[];cheatLog=[];cheatCount=0;cheatCooldown={};
   postureWarnings=0;eyeWarnings=0;lightWarnings=0;goodFrames=0;totalFrames=0;
+  noFaceCount=0;extraPersonCount=0;
+  document.getElementById('cheat-log').style.display='none';
+  document.getElementById('cheat-items').innerHTML='';
+  document.getElementById('q-results').innerHTML='';
+  document.getElementById('overall-num').textContent='--';
 }
 
 async function callAI(prompt){
   const res=await fetch(API_URL,{
     method:'POST',
     headers:{'Content-Type':'application/json','Authorization':'Bearer '+apiKey,'HTTP-Referer':'https://punit848.github.io/ai-resume-developer/','X-Title':'CareerAI Interview'},
-    body:JSON.stringify({model:MODEL,messages:[{role:'user',content:prompt}],max_tokens:300})
+    body:JSON.stringify({model:MODEL,messages:[{role:'user',content:prompt}],max_tokens:400})
   });
   const data=await res.json();
-  if(data.error)throw new Error(data.error.message);
+  if(data.error) throw new Error(data.error.message);
   return data.choices?.[0]?.message?.content||'No response.';
 }
 
