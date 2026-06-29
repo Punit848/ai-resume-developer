@@ -339,7 +339,7 @@ canvas#detection-canvas{position:absolute;inset:0;width:100%;height:100%;pointer
           <polygon points="100,106 94,112 106,112" fill="#cc6677"/>
 
           <!-- Tom smirk mouth -->
-          <path id="cat-mouth" d="M90 114 Q100 122 110 114" fill="none" stroke="#aa4455" stroke-width="2" stroke-linecap="round" class="cat-mouth"/>
+          <path id="cat-mouth" d="M88 118 Q100 126 112 118" fill="none" stroke="#aa4455" stroke-width="2" stroke-linecap="round" class="cat-mouth"/>
 
           <!-- Thick Tom whiskers - 3 each side -->
           <line x1="58" y1="106" x2="91" y2="109" stroke="white" stroke-width="1.5" opacity=".9"/>
@@ -507,21 +507,23 @@ async function startInterview(){
 let faceDetector=null;
 let noFaceCount=0; // consecutive frames with no face
 let extraPersonCount=0; // consecutive frames with extra face
-const NO_FACE_THRESHOLD=4; // need 4 consecutive misses before warning (less sensitive)
+const NO_FACE_THRESHOLD=2; // need 4 consecutive misses before warning (less sensitive)
 const EXTRA_PERSON_THRESHOLD=3;
 
 async function startPostureCheck(){
-  // Load BlazeFace AI model
   try{
-    showToast('Loading AI face detection...');
+    showToast('🐱 Loading AI face detection...');
+    await tf.ready();
     faceDetector=await blazeface.load();
-    showToast('✅ AI face detection ready!');
+    showToast('✅ Face detection ready!');
+    console.log('BlazeFace loaded successfully');
   }catch(e){
-    console.log('BlazeFace load failed, using fallback');
+    console.log('BlazeFace failed:',e.message);
     faceDetector=null;
+    showToast('⚠️ Camera analysis in basic mode');
   }
-  // Check every 3 seconds (less frequent = less false alarms)
-  postureInt=setInterval(()=>checkFrame(),3000);
+  // Check every 2.5 seconds
+  postureInt=setInterval(()=>checkFrame(),2500);
 }
 
 async function checkFrame(){
@@ -570,23 +572,49 @@ async function checkFrame(){
         setChip('chip-face','good','👤 Face detected ✓');
         goodFrames++;
 
-        // Check face position for eye contact
+        // Accurate face position analysis
         const face=predictions[0];
-        const nose=face.landmarks[2]; // nose tip
-        const faceCenterX=nose[0]/canvas.width;
-        const faceCenterY=nose[1]/canvas.height;
-        const lookingAtCamera=faceCenterX>0.25&&faceCenterX<0.75&&faceCenterY>0.15&&faceCenterY<0.75;
-        setChip('chip-eye',lookingAtCamera?'good':'warn',lookingAtCamera?'👀 Eye contact OK':'👀 Look at camera!');
-        if(!lookingAtCamera) eyeWarnings++;
 
-        // Check face size for posture (too small = leaning back)
-        const box=face.topLeft&&face.bottomRight?
-          {w:face.bottomRight[0]-face.topLeft[0],h:face.bottomRight[1]-face.topLeft[1]}:
-          {w:canvas.width*0.3,h:canvas.height*0.4};
-        const faceRatio=(box.w*box.h)/(canvas.width*canvas.height);
-        const goodPosture=faceRatio>0.04;
-        setChip('chip-posture',goodPosture?'good':'warn',goodPosture?'🪑 Posture OK':'🪑 Sit closer/straighter!');
-        if(!goodPosture) postureWarnings++;
+        // Get face bounding box
+        const topLeft=face.topLeft;
+        const bottomRight=face.bottomRight;
+        const faceW=bottomRight[0]-topLeft[0];
+        const faceH=bottomRight[1]-topLeft[1];
+        const faceCenterX=(topLeft[0]+faceW/2)/canvas.width;
+        const faceCenterY=(topLeft[1]+faceH/2)/canvas.height;
+
+        // Eye contact: face should be centered horizontally and in upper half
+        const horizontalOk=faceCenterX>0.2&&faceCenterX<0.8;
+        const verticalOk=faceCenterY>0.1&&faceCenterY<0.7;
+        const lookingAtCamera=horizontalOk&&verticalOk;
+
+        if(lookingAtCamera){
+          setChip('chip-eye','good','👀 Eye contact ✓');
+        } else if(!horizontalOk){
+          setChip('chip-eye','warn','👀 Center your face!');
+          eyeWarnings++;
+        } else {
+          setChip('chip-eye','warn','👀 Look at camera!');
+          eyeWarnings++;
+        }
+
+        // Posture: check face size (too small = too far, leaning back)
+        const faceArea=(faceW*faceH)/(canvas.width*canvas.height);
+        const tooFar=faceArea<0.03;
+        const tooClose=faceArea>0.35;
+        const goodPosture=!tooFar&&!tooClose;
+
+        if(tooFar){
+          setChip('chip-posture','warn','🪑 Sit closer to camera!');
+          postureWarnings++;
+        } else if(tooClose){
+          setChip('chip-posture','warn','🪑 Sit a bit further back!');
+          postureWarnings++;
+        } else {
+          setChip('chip-posture','good','🪑 Posture ✓');
+        }
+
+
 
       } else if(faceCount>=2){
         // Multiple faces detected!
@@ -625,10 +653,10 @@ async function checkFrame(){
     const t=Date.now()/8000;
     const postureOk=Math.sin(t)>-0.3;
     const eyeOk=Math.cos(t*1.2)>-0.25;
-    setChip('chip-posture','warn','🪑 Enable camera for posture');
-    setChip('chip-eye','warn','👀 Enable camera for eye contact');
-    postureWarnings++;
-    eyeWarnings++;
+    setChip('chip-posture','bad','🪑 No camera — posture unknown');
+    setChip('chip-eye','bad','👀 No camera — eye contact unknown');
+    postureWarnings+=3;
+    eyeWarnings+=3;
   }
 
   // Update integrity chip
@@ -716,10 +744,24 @@ function speakText(t){
   if(!window.speechSynthesis)return;
   window.speechSynthesis.cancel();
   const u=new SpeechSynthesisUtterance(t);
-  const voices=window.speechSynthesis.getVoices();
-  const preferredVoice=voices.find(v=>v.name.includes('Samantha')||v.name.includes('Google UK English Female')||v.name.includes('Karen')||v.name.includes('Female')||v.name.includes('Veena'));
+  // Load voices - may need a moment to populate
+  let voices=window.speechSynthesis.getVoices();
+  if(!voices.length){
+    window.speechSynthesis.onvoiceschanged=()=>{
+      voices=window.speechSynthesis.getVoices();
+    };
+  }
+  // Pick friendly female voice in priority order
+  const preferredVoice=
+    voices.find(v=>v.name==='Samantha')||
+    voices.find(v=>v.name==='Google UK English Female')||
+    voices.find(v=>v.name==='Karen')||
+    voices.find(v=>v.name==='Moira')||
+    voices.find(v=>v.name.includes('Female')&&v.lang.startsWith('en'))||
+    voices.find(v=>v.lang==='en-IN'&&v.name.includes('female'))||
+    voices.find(v=>v.lang.startsWith('en'));
   if(preferredVoice) u.voice=preferredVoice;
-  u.rate=0.75; u.pitch=1.2; u.volume=1;
+  u.rate=0.82; u.pitch=1.15; u.volume=1;
   const ind=document.getElementById('speaking-ind');
   ind.classList.add('show');
   const mouth=document.getElementById('cat-mouth');
@@ -762,23 +804,39 @@ async function submitAnswer(){
   document.getElementById('fb-text').textContent='⏳ Analyzing...';
   document.getElementById('fb-box').classList.add('show');
 
-  const prompt=`You are a strict but fair interview evaluator. Score this answer honestly.
+  // Check answer quality before scoring
+  const wordCount = ans.trim().split(/\s+/).length;
+  if(wordCount < 8){
+    // Too short - auto low score
+    const shortFb = `SCORE: 2/10\nGOOD: You attempted to answer.\nIMPROVE: Your answer is too short. Give at least 3-4 sentences with specific details.\nTIP: Use the STAR method - Situation, Task, Action, Result.`;
+    document.getElementById('fb-score').textContent='2/10';
+    document.getElementById('fb-score').className='fb-score l';
+    document.getElementById('fb-text').textContent=shortFb.replace(/SCORE:\s*\d+\/10\n?/i,'').trim();
+    results.push({q:q.q,a:ans,fb:shortFb,score:2,cat:q.c});
+    setTimeout(()=>{qIdx++;qIdx<questions.length?loadQ():endInterview();},3500);
+    return;
+  }
+
+  const prompt=`You are a strict and fair interview examiner. Score this answer honestly based on quality.
 
 QUESTION: ${q.q}
 ANSWER: ${ans}
+WORD COUNT: ${wordCount} words
 
-STRICT SCORING RULES:
-- 1-3: Very poor, irrelevant, or too short (under 10 words)
-- 4-5: Below average, vague, missing key points
-- 6-7: Average, some good points but lacks detail or structure
-- 8-9: Good, clear, structured, specific examples given
-- 10: Exceptional, perfect STAR structure, very specific
+STRICT SCORING CRITERIA:
+- 1-2: Completely irrelevant or offensive answer
+- 3-4: Too vague, very short, no specific examples, under 20 words
+- 5-6: Some relevant points but lacks structure, detail or examples
+- 7-8: Good answer with clear structure and some specific examples
+- 9-10: Excellent - specific examples, STAR structure, confident and complete
 
-Reply in EXACTLY this format (no extra text):
+IMPORTANT: Be strict. A one-sentence answer should never get above 4. A rambling irrelevant answer should get 2-3.
+
+Reply in EXACTLY this format only:
 SCORE: X/10
-GOOD: [what was done well, be specific]
-IMPROVE: [what to do better next time, be specific]
-TIP: [one quick actionable tip]`;
+GOOD: [specific strength of this answer]
+IMPROVE: [specific thing to do better]
+TIP: [one actionable improvement tip]`;
 
   try{
     const fb=await callAI(prompt);
@@ -787,7 +845,10 @@ TIP: [one quick actionable tip]`;
     const el=document.getElementById('fb-score');
     el.textContent=score+'/10';
     el.className='fb-score '+(score>=8?'g':score>=6?'m':'l');
-    document.getElementById('fb-text').textContent=fb.replace(/SCORE:\s*\d+\/10\n?/i,'').trim();
+    // Format feedback nicely
+    let fbClean=fb.replace(/SCORE:\s*\d+\/10\n?/i,'').trim();
+    fbClean=fbClean.replace('GOOD:','✅').replace('IMPROVE:','\n📈').replace('TIP:','\n💡');
+    document.getElementById('fb-text').textContent=fbClean;
     results.push({q:q.q,a:ans,fb,score,cat:q.c});
   }catch(e){
     results.push({q:q.q,a:ans,fb:'N/A',score:0,cat:q.c});
@@ -822,11 +883,11 @@ async function endInterview(){
   const ansScores=results.map(r=>r.score);
   const ansAvg=ansScores.length?Math.round(ansScores.reduce((a,b)=>a+b,0)/ansScores.length):0;
 
-  const eyeScore=totalFrames?Math.max(1,Math.round(10-(eyeWarnings/totalFrames)*15)):8;
-  const postureScore=totalFrames?Math.max(1,Math.round(10-(postureWarnings/totalFrames)*15)):8;
+  const eyeScore=totalFrames?Math.max(1,Math.round(10-(eyeWarnings/totalFrames)*20)):3;
+  const postureScore=totalFrames?Math.max(1,Math.round(10-(postureWarnings/totalFrames)*20)):3;
   const lightScore=totalFrames?Math.max(1,Math.round(10-(lightWarnings/totalFrames)*12)):9;
   const integrityScore=Math.max(1,10-cheatCount*2);
-  const overall=ansAvg===0?0:Math.round((ansAvg*2+eyeScore+postureScore+lightScore+integrityScore)/6);
+  const overall=ansAvg===0?0:Math.min(10,Math.round((ansAvg*3+eyeScore+postureScore+integrityScore)/5));
 
   // Animate bars
   setTimeout(()=>{
@@ -854,7 +915,7 @@ async function endInterview(){
       </div>`).join('')+'</div>';
 
   // Cat bubble — get AI cat feedback
-  const catPrompt=`You are a cute, encouraging cat AI coach. Give friendly feedback on this interview performance. Use cat personality (occasionally say "meow", "purr", "*flicks tail*" etc).
+  const catPrompt=`You are Mimi, a warm and encouraging cat interview coach. Give friendly, supportive feedback like a good mentor would. Start with "Meow!" then give honest but kind feedback. Be specific about what they did well and what to improve. Sound warm, friendly and encouraging — like a coach who genuinely wants them to succeed. Keep it to 4-5 sentences.
 
 Stats:
 - Answer quality: ${ansAvg}/10
