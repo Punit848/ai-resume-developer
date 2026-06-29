@@ -99,18 +99,21 @@ canvas#detection-canvas{position:absolute;inset:0;width:100%;height:100%;pointer
 .cat-bubble::after{content:'';position:absolute;bottom:-10px;left:20px;width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:10px solid var(--border)}
 
 /* CAT SVG ANIMATION */
-.cat-svg{width:160px;height:160px;margin:0 auto;display:block}
-.cat-body{animation:catbob 2s ease-in-out infinite}
-@keyframes catbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-.cat-tail{transform-origin:20px 10px;animation:tailwag 1.5s ease-in-out infinite}
-@keyframes tailwag{0%,100%{transform:rotate(-15deg)}50%{transform:rotate(15deg)}}
-.cat-ear-l{animation:eartwitch 3s ease-in-out infinite}
-.cat-ear-r{animation:eartwitch 3s ease-in-out infinite .5s}
-@keyframes eartwitch{0%,90%,100%{transform:rotate(0)}95%{transform:rotate(-10deg)}}
-.cat-eye-l,.cat-eye-r{animation:blinkeye 4s ease-in-out infinite}
-@keyframes blinkeye{0%,48%,52%,100%{transform:scaleY(1)}50%{transform:scaleY(0.05)}}
-.cat-mouth{animation:mouthcat 3s ease-in-out infinite}
-@keyframes mouthcat{0%,100%{d:path('M75 110 Q80 115 85 110')}50%{d:path('M75 112 Q80 118 85 112')}}
+.cat-svg{width:200px;height:220px;margin:0 auto;display:block}
+.cat-body{animation:catbob 2.5s ease-in-out infinite}
+@keyframes catbob{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.cat-tail{transform-origin:15px 5px;animation:tailwag 2s ease-in-out infinite}
+@keyframes tailwag{0%,100%{transform:rotate(-20deg)}50%{transform:rotate(20deg)}}
+.cat-ear-l{transform-origin:20px 30px;animation:eartwitch 4s ease-in-out infinite}
+.cat-ear-r{transform-origin:20px 30px;animation:eartwitch 4s ease-in-out infinite .7s}
+@keyframes eartwitch{0%,85%,100%{transform:rotate(0)}92%{transform:rotate(-12deg)}}
+.cat-eye-l{transform-origin:20px 20px;animation:blinkeye 5s ease-in-out infinite}
+.cat-eye-r{transform-origin:20px 20px;animation:blinkeye 5s ease-in-out infinite .3s}
+@keyframes blinkeye{0%,45%,55%,100%{transform:scaleY(1)}50%{transform:scaleY(0.05)}}
+.cat-mouth{animation:mouthcat 4s ease-in-out infinite}
+@keyframes mouthcat{0%,100%{d:path('M75 110 Q80 114 85 110')}50%{d:path('M75 111 Q80 116 85 111')}}
+.cat-mouth-speaking{animation:mouthspeak 0.12s ease-in-out infinite!important}
+@keyframes mouthspeak{0%,100%{d:path('M72 108 Q80 118 88 108')}50%{d:path('M72 105 Q80 126 88 105')}}50%{d:path('M75 112 Q80 118 85 112')}}
 
 /* SCORE CARD */
 .score-card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:1.5rem}
@@ -266,61 +269,96 @@ canvas#detection-canvas{position:absolute;inset:0;width:100%;height:100%;pointer
     <div class="cat-container">
       <div class="cat-bubble" id="cat-bubble">Analyzing your interview... 🐾</div>
 
-      <!-- ANIMATED CAT SVG -->
-      <svg class="cat-svg" viewBox="0 0 160 180" xmlns="http://www.w3.org/2000/svg">
+      <!-- TOM CAT SVG -->
+      <svg class="cat-svg" viewBox="0 0 200 220" xmlns="http://www.w3.org/2000/svg">
+        <!-- Shadow -->
+        <ellipse cx="100" cy="210" rx="55" ry="8" fill="#555" opacity=".2"/>
+
         <!-- Tail -->
         <g class="cat-tail">
-          <path d="M80 155 Q50 165 40 150 Q30 135 45 130 Q60 125 70 140 Q75 148 80 155Z" fill="#7c6fff" opacity=".7"/>
+          <path d="M100 185 Q65 200 55 182 Q45 164 62 157 Q75 152 82 168 Q90 180 100 185Z" fill="#888" opacity=".9"/>
+          <!-- tail tip -->
+          <ellipse cx="58" cy="168" rx="10" ry="7" fill="#ddd" transform="rotate(-30,58,168)"/>
         </g>
+
         <!-- Body -->
         <g class="cat-body">
-          <!-- Body shape -->
-          <ellipse cx="80" cy="130" rx="38" ry="32" fill="#7c6fff"/>
+          <!-- Main body -->
+          <ellipse cx="100" cy="168" rx="52" ry="44" fill="#888"/>
+          <!-- Belly white -->
+          <ellipse cx="100" cy="172" rx="30" ry="30" fill="#ddd"/>
+          <!-- Body stripes -->
+          <path d="M76 148 Q100 142 124 148" fill="none" stroke="#666" stroke-width="2.5" opacity=".5"/>
+          <path d="M72 160 Q100 153 128 160" fill="none" stroke="#666" stroke-width="2.5" opacity=".5"/>
+
+          <!-- Neck -->
+          <rect x="82" y="118" width="36" height="24" rx="8" fill="#888"/>
+
           <!-- Head -->
-          <circle cx="80" cy="82" r="36" fill="#7c6fff"/>
-          <!-- Ears -->
+          <circle cx="100" cy="98" r="52" fill="#888"/>
+
+          <!-- Head stripes -->
+          <path d="M82 52 Q100 46 118 52" fill="none" stroke="#666" stroke-width="2" opacity=".55"/>
+          <path d="M78 64 Q100 57 122 64" fill="none" stroke="#666" stroke-width="2" opacity=".55"/>
+          <path d="M74 76 Q100 68 126 76" fill="none" stroke="#666" stroke-width="2" opacity=".55"/>
+
+          <!-- Left ear -->
           <g class="cat-ear-l">
-            <polygon points="52,55 44,28 68,48" fill="#7c6fff"/>
-            <polygon points="54,53 48,33 66,48" fill="#ff6b9d" opacity=".6"/>
+            <polygon points="66,62 50,24 86,56" fill="#888"/>
+            <polygon points="68,60 55,30 84,56" fill="#cc8899"/>
+            <line x1="62" y1="56" x2="68" y2="32" stroke="#aaa" stroke-width="1" opacity=".4"/>
           </g>
+
+          <!-- Right ear -->
           <g class="cat-ear-r">
-            <polygon points="108,55 116,28 92,48" fill="#7c6fff"/>
-            <polygon points="106,53 112,33 94,48" fill="#ff6b9d" opacity=".6"/>
+            <polygon points="134,62 150,24 114,56" fill="#888"/>
+            <polygon points="132,60 145,30 116,56" fill="#cc8899"/>
+            <line x1="138" y1="56" x2="132" y2="32" stroke="#aaa" stroke-width="1" opacity=".4"/>
           </g>
-          <!-- Face -->
-          <circle cx="80" cy="82" r="30" fill="#9d8fff"/>
-          <!-- Eyes -->
+
+          <!-- Face white muzzle -->
+          <ellipse cx="100" cy="108" rx="38" ry="32" fill="#ddd"/>
+
+          <!-- Left eye -->
           <g class="cat-eye-l">
-            <ellipse cx="68" cy="78" rx="7" ry="8" fill="#1a1a2e"/>
-            <circle cx="70" cy="76" r="2" fill="white"/>
-            <circle cx="68" cy="78" r="3" fill="#00d4aa" opacity=".4"/>
+            <ellipse cx="84" cy="90" rx="11" ry="10" fill="#1a2a10"/>
+            <ellipse cx="84" cy="90" rx="7" ry="8" fill="#4a7a20"/>
+            <ellipse cx="84" cy="90" rx="3" ry="6" fill="#0a0a0a"/>
+            <circle cx="88" cy="86" r="3" fill="white"/>
           </g>
+
+          <!-- Right eye -->
           <g class="cat-eye-r">
-            <ellipse cx="92" cy="78" rx="7" ry="8" fill="#1a1a2e"/>
-            <circle cx="94" cy="76" r="2" fill="white"/>
-            <circle cx="92" cy="78" r="3" fill="#00d4aa" opacity=".4"/>
+            <ellipse cx="116" cy="90" rx="11" ry="10" fill="#1a2a10"/>
+            <ellipse cx="116" cy="90" rx="7" ry="8" fill="#4a7a20"/>
+            <ellipse cx="116" cy="90" rx="3" ry="6" fill="#0a0a0a"/>
+            <circle cx="120" cy="86" r="3" fill="white"/>
           </g>
+
           <!-- Nose -->
-          <polygon points="80,88 77,92 83,92" fill="#ff6b9d"/>
-          <!-- Mouth -->
-          <path id="cat-mouth" d="M75 93 Q80 98 85 93" fill="none" stroke="#ff6b9d" stroke-width="1.5" stroke-linecap="round"/>
-          <!-- Whiskers -->
-          <line x1="45" y1="88" x2="70" y2="90" stroke="white" stroke-width="1" opacity=".6"/>
-          <line x1="45" y1="93" x2="70" y2="93" stroke="white" stroke-width="1" opacity=".6"/>
-          <line x1="90" y1="90" x2="115" y2="88" stroke="white" stroke-width="1" opacity=".6"/>
-          <line x1="90" y1="93" x2="115" y2="93" stroke="white" stroke-width="1" opacity=".6"/>
+          <polygon points="100,106 94,112 106,112" fill="#cc6677"/>
+
+          <!-- Tom smirk mouth -->
+          <path id="cat-mouth" d="M90 114 Q100 122 110 114" fill="none" stroke="#aa4455" stroke-width="2" stroke-linecap="round" class="cat-mouth"/>
+
+          <!-- Thick Tom whiskers - 3 each side -->
+          <line x1="58" y1="106" x2="91" y2="109" stroke="white" stroke-width="1.5" opacity=".9"/>
+          <line x1="55" y1="112" x2="91" y2="112" stroke="white" stroke-width="1.5" opacity=".9"/>
+          <line x1="58" y1="118" x2="91" y2="115" stroke="white" stroke-width="1.5" opacity=".9"/>
+          <line x1="109" y1="109" x2="142" y2="106" stroke="white" stroke-width="1.5" opacity=".9"/>
+          <line x1="109" y1="112" x2="145" y2="112" stroke="white" stroke-width="1.5" opacity=".9"/>
+          <line x1="109" y1="115" x2="142" y2="118" stroke="white" stroke-width="1.5" opacity=".9"/>
+
           <!-- Paws -->
-          <ellipse cx="55" cy="155" rx="14" ry="10" fill="#7c6fff"/>
-          <ellipse cx="105" cy="155" rx="14" ry="10" fill="#7c6fff"/>
-          <!-- Belly -->
-          <ellipse cx="80" cy="133" rx="22" ry="18" fill="#b8acff" opacity=".4"/>
+          <ellipse cx="70" cy="206" rx="18" ry="11" fill="#888"/>
+          <ellipse cx="130" cy="206" rx="18" ry="11" fill="#888"/>
           <!-- Toe beans -->
-          <circle cx="50" cy="158" r="3" fill="#ff6b9d" opacity=".5"/>
-          <circle cx="57" cy="160" r="3" fill="#ff6b9d" opacity=".5"/>
-          <circle cx="64" cy="158" r="3" fill="#ff6b9d" opacity=".5"/>
-          <circle cx="96" cy="158" r="3" fill="#ff6b9d" opacity=".5"/>
-          <circle cx="103" cy="160" r="3" fill="#ff6b9d" opacity=".5"/>
-          <circle cx="110" cy="158" r="3" fill="#ff6b9d" opacity=".5"/>
+          <circle cx="62" cy="210" r="3.5" fill="#cc8899" opacity=".6"/>
+          <circle cx="70" cy="213" r="3.5" fill="#cc8899" opacity=".6"/>
+          <circle cx="78" cy="210" r="3.5" fill="#cc8899" opacity=".6"/>
+          <circle cx="122" cy="210" r="3.5" fill="#cc8899" opacity=".6"/>
+          <circle cx="130" cy="213" r="3.5" fill="#cc8899" opacity=".6"/>
+          <circle cx="138" cy="210" r="3.5" fill="#cc8899" opacity=".6"/>
         </g>
       </svg>
 
@@ -587,10 +625,10 @@ async function checkFrame(){
     const t=Date.now()/8000;
     const postureOk=Math.sin(t)>-0.3;
     const eyeOk=Math.cos(t*1.2)>-0.25;
-    setChip('chip-posture',postureOk?'good':'warn',postureOk?'🪑 Posture OK':'🪑 Sit straight!');
-    setChip('chip-eye',eyeOk?'good':'warn',eyeOk?'👀 Eye contact OK':'👀 Look at camera!');
-    if(!postureOk) postureWarnings++;
-    if(!eyeOk) eyeWarnings++;
+    setChip('chip-posture','warn','🪑 Enable camera for posture');
+    setChip('chip-eye','warn','👀 Enable camera for eye contact');
+    postureWarnings++;
+    eyeWarnings++;
   }
 
   // Update integrity chip
@@ -678,10 +716,18 @@ function speakText(t){
   if(!window.speechSynthesis)return;
   window.speechSynthesis.cancel();
   const u=new SpeechSynthesisUtterance(t);
-  u.rate=0.9; u.pitch=1; u.volume=1;
+  const voices=window.speechSynthesis.getVoices();
+  const preferredVoice=voices.find(v=>v.name.includes('Samantha')||v.name.includes('Google UK English Female')||v.name.includes('Karen')||v.name.includes('Female')||v.name.includes('Veena'));
+  if(preferredVoice) u.voice=preferredVoice;
+  u.rate=0.75; u.pitch=1.2; u.volume=1;
   const ind=document.getElementById('speaking-ind');
   ind.classList.add('show');
-  u.onend=()=>ind.classList.remove('show');
+  const mouth=document.getElementById('cat-mouth');
+  if(mouth) mouth.classList.add('cat-mouth-speaking');
+  u.onend=()=>{
+    ind.classList.remove('show');
+    if(mouth) mouth.classList.remove('cat-mouth-speaking');
+  };
   window.speechSynthesis.speak(u);
 }
 
@@ -716,13 +762,23 @@ async function submitAnswer(){
   document.getElementById('fb-text').textContent='⏳ Analyzing...';
   document.getElementById('fb-box').classList.add('show');
 
-  const prompt=`Evaluate this interview answer briefly.
+  const prompt=`You are a strict but fair interview evaluator. Score this answer honestly.
+
 QUESTION: ${q.q}
 ANSWER: ${ans}
-Reply in this format:
+
+STRICT SCORING RULES:
+- 1-3: Very poor, irrelevant, or too short (under 10 words)
+- 4-5: Below average, vague, missing key points
+- 6-7: Average, some good points but lacks detail or structure
+- 8-9: Good, clear, structured, specific examples given
+- 10: Exceptional, perfect STAR structure, very specific
+
+Reply in EXACTLY this format (no extra text):
 SCORE: X/10
-GOOD: [one sentence]
-IMPROVE: [one sentence]`;
+GOOD: [what was done well, be specific]
+IMPROVE: [what to do better next time, be specific]
+TIP: [one quick actionable tip]`;
 
   try{
     const fb=await callAI(prompt);
@@ -753,20 +809,24 @@ async function endInterview(){
   clearInterval(postureInt);
   stopMic();
   window.speechSynthesis.cancel();
+  timerInt=null;
+  postureInt=null;
+  qIdx=questions.length;
+  if(recognition){ try{recognition.stop();}catch(e){} }
   if(stream) stream.getTracks().forEach(t=>t.stop());
 
   document.getElementById('interview-screen').style.display='none';
   document.getElementById('results-screen').style.display='block';
 
   // Calculate scores
-  const ansScores=results.filter(r=>r.score>0).map(r=>r.score);
-  const ansAvg=ansScores.length?Math.round(ansScores.reduce((a,b)=>a+b,0)/ansScores.length):5;
+  const ansScores=results.map(r=>r.score);
+  const ansAvg=ansScores.length?Math.round(ansScores.reduce((a,b)=>a+b,0)/ansScores.length):0;
 
   const eyeScore=totalFrames?Math.max(1,Math.round(10-(eyeWarnings/totalFrames)*15)):8;
   const postureScore=totalFrames?Math.max(1,Math.round(10-(postureWarnings/totalFrames)*15)):8;
   const lightScore=totalFrames?Math.max(1,Math.round(10-(lightWarnings/totalFrames)*12)):9;
   const integrityScore=Math.max(1,10-cheatCount*2);
-  const overall=Math.round((ansAvg+eyeScore+postureScore+lightScore+integrityScore)/5);
+  const overall=ansAvg===0?0:Math.round((ansAvg*2+eyeScore+postureScore+lightScore+integrityScore)/6);
 
   // Animate bars
   setTimeout(()=>{
